@@ -23,3 +23,11 @@ services:
       prestart:
         condition: service_completed_successfully
     restart: no
+    networks:
+      - proxy-manager_default
+
+
+networks:
+  proxy-manager_default:
+    external: true
+    name: proxy-manager_default
