@@ -54,13 +54,14 @@ def load_country_data():
                 session.add(country)
             session.commit()
     logger.info("Country data loaded successfully")
+    return
 
 
 def create_initial_data():
     load_country_data()
 
     # Create a session from the SessionLocal factory
-    logger.debug("Creating session for initial data seeding")
+    logger.info("Creating session for initial data seeding")
     with Session(engine) as session:
         # --- Permissions ---
         permission_names = [
@@ -127,9 +128,11 @@ def create_initial_data():
             UserRoles.Update,
             UserRoles.Delete,
         ]
-        logger.debug("Checking existing permissions in the database")
+        logger.info("Checking existing permissions in the database")
         existing_permissions = session.exec(select(Permission)).all()
+        logger.info(f"Existing permissions: {existing_permissions}")
         if not existing_permissions:
+            logger.info(permission_names)
             logger.info("Seeding initial permissions")
             for name in permission_names:
                 session.add(Permission(name=name))
