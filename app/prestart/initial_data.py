@@ -115,6 +115,7 @@ def create_initial_data():
             Users.Update,
             Users.Delete,
             Users.ChangePassword,
+            Users.ShowMe,
             UserPermissions.List,
             UserPermissions.Show,
             UserPermissions.Create,

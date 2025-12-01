@@ -79,6 +79,10 @@ class Users(Permission, resource="users"):
     def ChangePassword(cls) -> str:
         return cls._get_permission("changepassword")
 
+    @classproperty
+    def ShowMe(cls) -> str:
+        return cls._get_permission("showme")
+
 
 class UserPermissions(Permission, resource="userpermissions"):
     pass
