@@ -1,9 +1,10 @@
 import os
 
-from dotenv import load_dotenv
-from pydantic_settings import BaseSettings
+import dotenv
 
-load_dotenv("../../../.env")
+dotenv.load_dotenv()
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -20,11 +21,11 @@ class Settings(BaseSettings):
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
-        user = os.getenv("MYSQL_USER", "congress_fastapi")
-        password = os.getenv("MYSQL_PASSWORD", "UJo34awULUVZ12ORhLXu9j17sB2bgo0W")
-        host = os.getenv("MYSQL_SERVER", "congressinfo.space")
+        user = os.getenv("MYSQL_USER", "")
+        password = os.getenv("MYSQL_PASSWORD", "")
+        host = os.getenv("MYSQL_SERVER", "")
         port = os.getenv("MYSQL_PORT", "3306")
-        database = os.getenv("MYSQL_DB", "congress_fastapi")
+        database = os.getenv("MYSQL_DB", "")
         # For MariaDB 10.5+, use mariadb connector
         return f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}?charset=utf8mb4"
 

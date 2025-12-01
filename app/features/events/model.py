@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -15,8 +15,8 @@ class Category(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     name: str = Field(unique=True, index=True)
-    description: str | None = None
-    events: list["Event"] = Relationship(back_populates="category")
+    description: Optional[str] = None  # noqa: UP007
+    events: List["Event"] = Relationship(back_populates="category")  # noqa: UP006
 
 
 class EventType(SQLModel, table=True):
@@ -25,8 +25,8 @@ class EventType(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     name: str = Field(unique=True, index=True)
-    description: str | None = None
-    events: list["Event"] = Relationship(back_populates="event_type")
+    description: Optional[str] = None  # noqa: UP007
+    events: List["Event"] = Relationship(back_populates="event_type")  # noqa: UP006
 
 
 class Event(SQLModel, table=True):
@@ -40,9 +40,9 @@ class Event(SQLModel, table=True):
     end_date: datetime
     is_published: bool = Field(default=False)
 
-    location_id: str | None = Field(default=None, foreign_key="locations.id")
-    category_id: str | None = Field(default=None, foreign_key="categories.id")
-    event_type_id: str | None = Field(default=None, foreign_key="event_types.id")
+    location_id: Optional[str] = Field(default=None, foreign_key="locations.id")  # noqa: UP007
+    category_id: Optional[str] = Field(default=None, foreign_key="categories.id")  # noqa: UP007
+    event_type_id: Optional[str] = Field(default=None, foreign_key="event_types.id")  # noqa: UP007
 
     event_type: Optional["EventType"] = Relationship(back_populates="events")
     location: Optional["Location"] = Relationship(back_populates="events")

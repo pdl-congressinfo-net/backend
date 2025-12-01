@@ -1,3 +1,6 @@
+import csv
+import logging
+
 from sqlmodel import Session, select
 
 from app.common.permissions import (
@@ -16,15 +19,48 @@ from app.common.permissions import (
 )
 from app.core.db import engine
 from app.core.security import get_password_hash
+from app.features.locations.model import Country
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role, RolePermission
 from app.features.users.model import User, UserRole
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+def load_country_data():
+    """Load initial country data into the database."""
+
+    logger.info("Loading initial country data")
+    with open("app/prestart/countries.csv", encoding="utf-8") as csvfile:
+        country_reader = csv.DictReader(csvfile)
+        with Session(engine) as session:
+            # Check if countries already exist
+            existing_countries = session.exec(select(Country)).first()
+            if existing_countries:
+                logger.info("Country data already exists, skipping initialization")
+                return
+
+            for row in country_reader:
+                country = Country(
+                    id=row["id"],
+                    name=row["name"],
+                    code2=row["code2"],
+                    code3=row["code3"],
+                    devco=bool(row["devco"]),
+                )
+                session.add(country)
+            session.commit()
+    logger.info("Country data loaded successfully")
+
 
 def create_initial_data():
-    """Seed initial roles, permissions, and an admin user."""
+    load_country_data()
 
     # Create a session from the SessionLocal factory
+    logger.debug("Creating session for initial data seeding")
     with Session(engine) as session:
         # --- Permissions ---
         permission_names = [
@@ -90,36 +126,40 @@ def create_initial_data():
             UserRoles.Update,
             UserRoles.Delete,
         ]
-
+        logger.debug("Checking existing permissions in the database")
         existing_permissions = session.exec(select(Permission)).all()
         if not existing_permissions:
+            logger.info("Seeding initial permissions")
             for name in permission_names:
                 session.add(Permission(name=name))
             session.commit()
 
-        # --- Roles ---
         admin_role = session.exec(select(Role).where(Role.name == "admin")).first()
         user_role = session.exec(select(Role).where(Role.name == "user")).first()
         guest_role = session.exec(select(Role).where(Role.name == "guest")).first()
-
+        logger.debug("Checking existing roles in the database")
         if not admin_role or not user_role or not guest_role:
             if not admin_role:
+                logger.info("Seeding admin role")
                 admin_role = Role(name="admin")
                 session.add(admin_role)
             if not user_role:
+                logger.info("Seeding user role")
                 user_role = Role(name="user")
                 session.add(user_role)
             if not guest_role:
+                logger.info("Seeding guest role")
                 guest_role = Role(name="guest")
                 session.add(guest_role)
             session.commit()
 
         # --- Attach permissions to admin role ---
+        logger.debug("Checking existing role permissions for admin role")
         existing_role_perms = session.exec(
             select(RolePermission).where(RolePermission.role_id == admin_role.id)
         ).all()
         if not existing_role_perms:
-            print("Attaching permissions to admin role...")
+            logger.info("Seeding role permissions for admin role")
             permissions = session.exec(select(Permission)).all()
             for perm in permissions:
                 session.add(
@@ -128,12 +168,12 @@ def create_initial_data():
             session.commit()
 
         # --- Admin User ---
+        logger.debug("Checking existing admin user in the database")
         existing_admin = session.exec(
             select(User).where(User.email == "admin@example.com")
         ).first()
         if not existing_admin:
-            print("Creating admin user...")
-
+            logger.info("Seeding admin user")
             hashed_password = get_password_hash("admin123")
 
             admin_user = User(
@@ -147,8 +187,6 @@ def create_initial_data():
             # Link admin user to admin role
             session.add(UserRole(user_id=admin_user.id, role_id=admin_role.id))
             session.commit()
-
-        print("✅ Initial data created successfully.")
 
 
 if __name__ == "__main__":

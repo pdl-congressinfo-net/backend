@@ -1,0 +1,8 @@
+services:
+  app:
+    volumes:
+      - .:/app
+    command: fastapi run --reload app/main.py
+    depends_on:
+      backend-prestart:
+        condition: service_completed_successfully

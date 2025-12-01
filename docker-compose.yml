@@ -1,0 +1,23 @@
+services:
+  prestart:
+    build: .
+    env_file:
+      - .env
+    command: /bin/sh -c "./scripts/prestart.sh"
+    restart: "no"
+
+  app:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      prestart:
+        condition: service_completed_successfully
+    ports:
+      - "8088:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
