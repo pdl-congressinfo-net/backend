@@ -1,6 +1,35 @@
-import emails
+from smtplib import SMTP_SSL
+
+from redmail import EmailSender
 
 from app.core.config import settings
+
+
+class Sender(EmailSender):
+    def __init__(self):
+        smtp_cls = SMTP_SSL if settings.SMTP_SSL else None
+
+        super().__init__(
+            host=settings.SMTP_HOST,
+            port=settings.SMTP_PORT,
+            username=settings.SMTP_USER,
+            password=settings.SMTP_PASSWORD,
+            use_starttls=(settings.SMTP_TLS and not settings.SMTP_SSL),
+            ssl=settings.SMTP_SSL,
+            cls_smtp=smtp_cls,
+        )
+
+    def send(
+        self,
+        subject: str,
+        html: str,
+        mail_from: tuple[str, str] | str,
+    ):
+        return super().send(
+            subject=subject,
+            html=html,
+            mail_from=mail_from,
+        )
 
 
 async def send_email(
@@ -10,7 +39,10 @@ async def send_email(
     html_content: str = "",
 ) -> None:
     assert settings.emails_enabled, "no provided configuration for email variables"
-    message = emails.Message(
+
+    email = Sender()
+
+    message = email.send(
         subject=subject,
         html=html_content,
         mail_from=(settings.EMAILS_FROM_NAME, settings.EMAILS_FROM_EMAIL),
