@@ -73,6 +73,9 @@ async def login_user(
     set_split_jwt_cookies(response, access_token)
     set_refresh_cookie(response, refresh_token)
 
+    user.last_login = datetime.utcnow()
+    db.commit()
+
     return {"detail": "Login successful"}
 
 
