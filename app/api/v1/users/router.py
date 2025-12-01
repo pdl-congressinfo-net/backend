@@ -9,7 +9,7 @@ from app.features.users.model import User
 users_router = APIRouter()
 
 
-@users_router.get("/me", response_model=UserRead)
+@users_router.get("/me", response_model=ApiResponse[UserRead])
 async def read_current_user(
     current_user: User = Depends(require_permission(Users.ShowMe)),
 ):

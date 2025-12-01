@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -65,8 +67,8 @@ class UserUpdate(BaseModel):
 
 class UserRead(UserBase):
     id: str
-    created_at: str
-    last_login: str | None = None
+    created_at: datetime
+    last_login: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -76,9 +78,9 @@ class LoginOTPBase(BaseModel):
     user_id: str | None = None
     email: str
     otp_code: str
-    created_at: str
-    expires_at: str
-    resend_available_at: str
+    created_at: datetime
+    expires_at: datetime
+    resend_available_at: datetime
     used: bool = False
 
 
@@ -90,9 +92,9 @@ class LoginOTPUpdate(BaseModel):
     user_id: str | None = None
     email: str | None = None
     otp_code: str | None = None
-    created_at: str | None = None
-    expires_at: str | None = None
-    resend_available_at: str | None = None
+    created_at: datetime | None = None
+    expires_at: datetime | None = None
+    resend_available_at: datetime | None = None
     used: bool | None = None
 
 
