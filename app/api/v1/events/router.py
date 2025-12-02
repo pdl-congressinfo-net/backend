@@ -33,7 +33,9 @@ async def list_event_categories(
 ):
     """List all event categories."""
     query = db.query(Category)
+    print(query)
     results, total = refine_query(query, Category, pagination)
+    print(results)
     return refine_list_response(response, results, total)
 
 

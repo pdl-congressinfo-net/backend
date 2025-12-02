@@ -4,8 +4,9 @@ from pydantic import BaseModel
 
 
 class CategoryBase(BaseModel):
-    name: str
-    description: str | None = None
+    code: str
+    name_de: str
+    name_en: str
 
 
 class CategoryCreate(CategoryBase):
@@ -13,8 +14,9 @@ class CategoryCreate(CategoryBase):
 
 
 class CategoryUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
+    code: str | None = None
+    name_de: str | None = None
+    name_en: str | None = None
 
 
 class CategoryRead(CategoryBase):
@@ -25,8 +27,11 @@ class CategoryRead(CategoryBase):
 
 
 class EventTypeBase(BaseModel):
-    name: str
-    description: str | None = None
+    code: str
+    name_de: str
+    name_en: str
+    description_de: str | None = None
+    description_en: str | None = None
 
 
 class EventTypeCreate(EventTypeBase):
@@ -34,8 +39,11 @@ class EventTypeCreate(EventTypeBase):
 
 
 class EventTypeUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
+    code: str | None = None
+    name_de: str | None = None
+    name_en: str | None = None
+    description_de: str | None = None
+    description_en: str | None = None
 
 
 class EventTypeRead(EventTypeBase):

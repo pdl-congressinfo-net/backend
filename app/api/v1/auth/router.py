@@ -242,6 +242,6 @@ async def get_current_user_permissions(
     db: Session = Depends(get_db),
 ):
     if user:
-        return check_permissions_user(user, [permission.permission])
+        return check_permissions_user(user, [permission.name])
     else:
-        return check_permissions_role("guest", [permission.permission], db)
+        return check_permissions_role("guest", [permission.name], db)
