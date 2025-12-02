@@ -1,4 +1,6 @@
-from fastapi import Cookie, Depends, HTTPException, Request, status
+from datetime import timedelta
+
+from fastapi import Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -6,6 +8,12 @@ from sqlmodel import Session as SQLSession
 
 from app.core.config import settings
 from app.core.db import engine
+from app.core.security import (
+    create_access_token,
+    decode_magic_token,
+    set_refresh_cookie,
+    set_split_jwt_cookies,
+)
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role
 from app.features.users.model import User
@@ -21,8 +29,10 @@ def get_db() -> Session:
 
 async def get_current_user(
     request: Request,
+    response: Response,
     jwt_hp: str = Cookie(None),
     jwt_sig: str = Cookie(None),
+    refresh_token: str = Cookie(None),
     db: Session = Depends(get_db),
 ) -> User | None:
     """Optionally authenticate the user using split JWT cookies.
@@ -30,6 +40,31 @@ async def get_current_user(
     """
 
     if not jwt_hp or not jwt_sig:
+        # Handle refresh token flow
+        if refresh_token:
+            payload = decode_magic_token(refresh_token)
+            if not payload:
+                raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+            email = payload["sub"]
+
+            if not email:
+                return None
+
+            # Lookup user in DB
+            user = db.query(User).filter(User.email == email).first()
+            if not user:
+                return None
+
+            access_expires = timedelta(minutes=15)
+            refresh_expires = timedelta(days=7)
+
+            access_token = create_access_token({"sub": email}, access_expires)
+            refresh_token = create_access_token({"sub": email}, refresh_expires)
+
+            set_refresh_cookie(response, refresh_token)
+            set_split_jwt_cookies(response, access_token)
+            return user
         return None
 
     # Reconstruct JWT from split cookies

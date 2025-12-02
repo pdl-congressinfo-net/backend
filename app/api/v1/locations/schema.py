@@ -47,10 +47,14 @@ class LocationTypeRead(LocationTypeBase):
 
 class LocationBase(BaseModel):
     name: str
-    address: str | None = None
+    road: str | None = None
+    number: str | None = None
     city: str | None = None
     state: str | None = None
     postal_code: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    link: str | None = None
     country_id: str | None = None
     location_type_id: str | None = None
 
@@ -61,10 +65,14 @@ class LocationCreate(LocationBase):
 
 class LocationUpdate(BaseModel):
     name: str | None = None
-    address: str | None = None
+    road: str | None = None
+    number: str | None = None
     city: str | None = None
     state: str | None = None
     postal_code: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    link: str | None = None
     country_id: str | None = None
     location_type_id: str | None = None
 
@@ -72,9 +80,13 @@ class LocationUpdate(BaseModel):
 class LocationRead(LocationBase):
     id: str
     name: str
-    address: str | None = None
+    road: str | None = None
+    number: str | None = None
     city: str | None = None
     state: str | None = None
     postal_code: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    link: str | None = None
     country_id: str | None = None
     location_type_id: str | None = None
