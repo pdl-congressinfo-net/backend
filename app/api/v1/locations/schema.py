@@ -20,6 +20,7 @@ class CountryBase(BaseModel):
     code2: str
     code3: str
     devco: bool | None = False
+    preferred: bool | None = False
 
 
 class CountryCreate(CountryBase):
@@ -31,6 +32,7 @@ class CountryUpdate(BaseModel):
     code2: str | None = None
     code3: str | None = None
     devco: bool | None = None
+    preferred: bool | None = None
 
 
 class CountryRead(CountryBase):
@@ -39,6 +41,7 @@ class CountryRead(CountryBase):
     code2: str
     code3: str
     devco: bool | None = False
+    preferred: bool | None = False
 
 
 class LocationTypeRead(LocationTypeBase):

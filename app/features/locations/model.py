@@ -29,6 +29,7 @@ class Country(SQLModel, table=True):
     code2: str = Field(unique=True, index=True, max_length=2)
     code3: str = Field(unique=True, index=True, max_length=3)
     devco: bool | None = Field(default=False)  # noqa: UP007
+    preferred: bool | None = Field(default=False)  # noqa: UP007
 
     locations: list["Location"] = Relationship(back_populates="country")
 
