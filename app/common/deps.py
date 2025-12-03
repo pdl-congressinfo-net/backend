@@ -10,7 +10,6 @@ from app.core.config import settings
 from app.core.db import engine
 from app.core.security import (
     create_access_token,
-    decode_magic_token,
     set_refresh_cookie,
     set_split_jwt_cookies,
 )
@@ -42,7 +41,12 @@ async def get_current_user(
     if not jwt_hp or not jwt_sig:
         # Handle refresh token flow
         if refresh_token:
-            payload = decode_magic_token(refresh_token)
+            try:
+                payload = jwt.decode(
+                    refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+                )
+            except JWTError:
+                return None
             if not payload:
                 raise HTTPException(status_code=401, detail="Invalid refresh token")
 
@@ -149,6 +153,15 @@ def check_permissions_user(user: User, required_permissions: list[str]) -> bool:
     return all(perm in user_permissions for perm in required_permissions)
 
 
+def get_user_permissions(user: User) -> list[str]:
+    """Get all permissions for a user"""
+    user_permissions = {user_permission.name for user_permission in user.permissions}
+    for role in user.roles:
+        for perm in role.permissions:
+            user_permissions.add(perm.name)
+    return list(user_permissions)
+
+
 def check_permissions_role(
     role: str, required_permissions: list[str], db: Session
 ) -> bool:
@@ -158,3 +171,12 @@ def check_permissions_role(
         return False
     role_permissions = [perm.name for perm in role_obj.permissions]
     return all(perm in role_permissions for perm in required_permissions)
+
+
+def get_role_permissions(role: str, db: Session) -> list[str]:
+    """Get all permissions for a role"""
+    role_obj = db.query(Role).filter(Role.name == role).first()
+    if not role_obj:
+        return []
+    role_permissions = [perm.name for perm in role_obj.permissions]
+    return role_permissions

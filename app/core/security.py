@@ -68,7 +68,7 @@ def decode_magic_token(token: str):
     try:
         decrypted = fernet.decrypt(token.encode(), ttl=120)
         data = json.loads(decrypted)
-        print("Decoded token data:", data)  # <-- log
+        print("Decoded token data:", data)
         return data
     except Exception as e:
         print("Failed to decode token:", e)
