@@ -66,17 +66,24 @@ async def create_role_permission(
 
 
 @roles_router.put(
-    "/permissions/{role_permission_id}", response_model=ApiResponse[RolePermissionRead]
+    "/permissions/{role_id}/{permission_id}",
+    response_model=ApiResponse[RolePermissionRead],
 )
 async def update_role_permission(
-    role_permission_id: str,
+    role_id: str,
+    permission_id: str,
     role_permission: RolePermissionUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(RolePermissions.Update)),
 ):
     """Update an existing role permission."""
     db_role_permission = (
-        db.query(RolePermission).filter(RolePermission.id == role_permission_id).first()
+        db.query(RolePermission)
+        .filter(
+            RolePermission.role_id == role_id,
+            RolePermission.permission_id == permission_id,
+        )
+        .first()
     )
     if not db_role_permission:
         raise HTTPException(status_code=404, detail="Role permission not found")
@@ -89,16 +96,22 @@ async def update_role_permission(
 
 
 @roles_router.delete(
-    "/permissions/{role_permission_id}", response_model=MessageResponse
+    "/permissions/{role_id}/{permission_id}", response_model=MessageResponse
 )
 async def delete_role_permission(
-    role_permission_id: str,
+    role_id: str,
+    permission_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(RolePermissions.Delete)),
 ):
     """Delete a role permission."""
     db_role_permission = (
-        db.query(RolePermission).filter(RolePermission.id == role_permission_id).first()
+        db.query(RolePermission)
+        .filter(
+            RolePermission.role_id == role_id,
+            RolePermission.permission_id == permission_id,
+        )
+        .first()
     )
     if not db_role_permission:
         raise HTTPException(status_code=404, detail="Role permission not found")
