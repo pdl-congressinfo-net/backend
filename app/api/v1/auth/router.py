@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from sqlmodel import select
 
@@ -15,6 +15,8 @@ from app.common.deps import (
     check_permissions_user,
     get_current_user,
     get_db,
+    get_role_permissions,
+    get_user_permissions,
 )
 from app.core.config import settings
 from app.core.mail import send_email
@@ -212,29 +214,6 @@ async def magic_login(request: MagicLoginRequest, db: Session = Depends(get_db))
     return response
 
 
-@auth_router.post("/refresh")
-async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
-    if not refresh_token:
-        raise HTTPException(status_code=401, detail="Missing refresh token")
-
-    payload = decode_magic_token(refresh_token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
-
-    email = payload["sub"]
-
-    access_expires = timedelta(minutes=15)
-    refresh_expires = timedelta(days=7)
-
-    access_token = create_access_token({"sub": email}, access_expires)
-    refresh_token = create_access_token({"sub": email}, refresh_expires)
-
-    response = Response()
-    set_refresh_cookie(response, refresh_token)
-    set_split_jwt_cookies(response, access_token)
-    return response
-
-
 @auth_router.post("/permissions")
 async def get_current_user_permissions(
     permission: PermissionBase,
@@ -245,3 +224,15 @@ async def get_current_user_permissions(
         return check_permissions_user(user, [permission.name])
     else:
         return check_permissions_role("guest", [permission.name], db)
+
+
+@auth_router.get("/permissions", response_model=list[PermissionBase])
+async def get_all_permissions(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if user:
+        permissions = get_user_permissions(user)
+    else:
+        permissions = get_role_permissions("guest", db)
+    return [PermissionBase(name=perm) for perm in permissions]
