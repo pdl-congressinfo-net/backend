@@ -5,7 +5,6 @@ from app.api.v1.roles.schema import (
     RoleCreate,
     RolePermissionCreate,
     RolePermissionRead,
-    RolePermissionUpdate,
     RoleRead,
     RoleUpdate,
 )
@@ -59,36 +58,6 @@ async def create_role_permission(
 ):
     """Create a new role permission."""
     db_role_permission = RolePermission.model_validate(role_permission)
-    db.add(db_role_permission)
-    db.commit()
-    db.refresh(db_role_permission)
-    return ApiResponse(data=db_role_permission)
-
-
-@roles_router.put(
-    "/permissions/{role_id}/{permission_id}",
-    response_model=ApiResponse[RolePermissionRead],
-)
-async def update_role_permission(
-    role_id: str,
-    permission_id: str,
-    role_permission: RolePermissionUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Update)),
-):
-    """Update an existing role permission."""
-    db_role_permission = (
-        db.query(RolePermission)
-        .filter(
-            RolePermission.role_id == role_id,
-            RolePermission.permission_id == permission_id,
-        )
-        .first()
-    )
-    if not db_role_permission:
-        raise HTTPException(status_code=404, detail="Role permission not found")
-    for key, value in role_permission.model_dump(exclude_unset=True).items():
-        setattr(db_role_permission, key, value)
     db.add(db_role_permission)
     db.commit()
     db.refresh(db_role_permission)
