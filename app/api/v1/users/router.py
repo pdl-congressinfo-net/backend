@@ -10,11 +10,12 @@ from app.api.v1.users.schema import (
     UserUpdate,
 )
 from app.common.deps import get_db, require_permission
-from app.common.permissions import UserRoles, Users
+from app.common.permissions import UserPermissions, UserRoles, Users
 from app.common.refine import refine_list_response
 from app.common.responses import ApiResponse, MessageResponse
-from app.features.users.model import User
+from app.features.users.model import User, UserPermission, UserRole
 from app.utils.pagination import PaginationParams
+from app.utils.refine_query import refine_query
 
 users_router = APIRouter()
 
@@ -24,7 +25,6 @@ async def read_current_user(
     current_user: User = Depends(require_permission(Users.ShowMe)),
 ):
     """Get current user details."""
-
     return ApiResponse(data=current_user)
 
 
@@ -36,8 +36,8 @@ async def list_user_roles(
     current_user: User = Depends(require_permission(UserRoles.List)),
 ):
     """List roles for the current user."""
-    query = db.query(User).filter(User.id == current_user.id)
-    results, total = query.first().roles, 1  # Assuming roles are pre-fetched
+    query = db.query(UserRole)
+    results, total = refine_query(query, UserRole, pagination)
     return refine_list_response(response, results, total)
 
 
@@ -96,14 +96,11 @@ async def list_user_permissions(
     response: Response,
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(Users.ListPermissions)),
+    current_user: User = Depends(require_permission(UserPermissions.List)),
 ):
     """List permissions for the current user."""
-    query = db.query(User).filter(User.id == current_user.id)
-    results, total = (
-        query.first().permissions,
-        1,
-    )  # Assuming permissions are pre-fetched
+    query = db.query(UserPermission)
+    results, total = refine_query(query, UserPermission, pagination)
     return refine_list_response(response, results, total)
 
 
@@ -113,7 +110,7 @@ async def list_user_permissions(
 async def get_user_permissions(
     user_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(Users.ShowPermissions)),
+    current_user: User = Depends(require_permission(UserPermissions.Show)),
 ):
     """Get permissions for a specific user."""
     user = db.query(User).filter(User.id == user_id).first()
@@ -126,7 +123,7 @@ async def get_user_permissions(
 async def create_user_permission(
     user_permission: UserPermissionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(Users.CreatePermissions)),
+    current_user: User = Depends(require_permission(UserPermissions.Create)),
 ):
     """Create a new user permission."""
     db_user = db.query(User).filter(User.id == user_permission.user_id).first()
@@ -146,7 +143,7 @@ async def delete_user_permission(
     user_id: str,
     permission_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(Users.DeletePermissions)),
+    current_user: User = Depends(require_permission(UserPermissions.Delete)),
 ):
     """Delete a user permission."""
     db_user = db.query(User).filter(User.id == user_id).first()
@@ -163,7 +160,7 @@ async def delete_user_permission(
     return MessageResponse(message="User permission deleted successfully")
 
 
-@users_router.get("", response_model=ApiResponse[list[UserRead]])
+@users_router.get("", response_model=list[UserRead])
 async def list_users(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -172,8 +169,7 @@ async def list_users(
 ):
     """List users."""
     query = db.query(User)
-    total = query.count()
-    users = query.offset(pagination.skip).limit(pagination.limit).all()
+    users, total = refine_query(query, User, pagination)
     return refine_list_response(response, users, total)
 
 

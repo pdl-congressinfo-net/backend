@@ -18,8 +18,6 @@ class UserRoleUpdate(BaseModel):
 
 
 class UserRoleRead(UserRoleBase):
-    id: str
-
     class Config:
         from_attributes = True
 
@@ -39,8 +37,6 @@ class UserPermissionUpdate(BaseModel):
 
 
 class UserPermissionRead(UserPermissionBase):
-    id: str
-
     class Config:
         from_attributes = True
 

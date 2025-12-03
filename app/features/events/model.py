@@ -28,8 +28,8 @@ class EventType(SQLModel, table=True):
     code: str = Field(unique=True, index=True, max_length=3, min_length=3)
     name_de: str = Field(unique=True, index=True)
     name_en: str = Field(unique=True, index=True)
-    description_de: Optional[str] = None  # noqa: UP007
-    description_en: Optional[str] = None  # noqa: UP007
+    description_de: Optional[str] = None  # noqa: UP045
+    description_en: Optional[str] = None  # noqa: UP045
     events: List["Event"] = Relationship(back_populates="event_type")  # noqa: UP006
 
 
@@ -44,9 +44,9 @@ class Event(SQLModel, table=True):
     end_date: datetime
     is_published: bool = Field(default=False)
 
-    location_id: Optional[str] = Field(default=None, foreign_key="locations.id")  # noqa: UP007
-    category_id: Optional[str] = Field(default=None, foreign_key="categories.id")  # noqa: UP007
-    event_type_id: Optional[str] = Field(default=None, foreign_key="event_types.id")  # noqa: UP007
+    location_id: Optional[str] = Field(default=None, foreign_key="locations.id")  # noqa: UP045
+    category_id: Optional[str] = Field(default=None, foreign_key="categories.id")  # noqa: UP045
+    event_type_id: Optional[str] = Field(default=None, foreign_key="event_types.id")  # noqa: UP045
 
     event_type: Optional["EventType"] = Relationship(back_populates="events")
     location: Optional["Location"] = Relationship(back_populates="events")
