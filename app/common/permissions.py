@@ -46,8 +46,12 @@ class Countries(Permission, resource="countries"):
 
 class Events(Permission, resource="events"):
     @classproperty
-    def Login(cls) -> str:
-        return cls._get_permission("login")
+    def Participate(cls) -> str:
+        return cls._get_permission("participate")
+
+    @classproperty
+    def ListAll(cls) -> str:
+        return cls._get_permission("listall")
 
 
 class EventTypes(Permission, resource="eventtypes"):

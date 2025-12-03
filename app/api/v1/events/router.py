@@ -12,7 +12,7 @@ from app.api.v1.events.schema import (
     EventTypeUpdate,
     EventUpdate,
 )
-from app.common.deps import get_db, require_permission
+from app.common.deps import check_permissions_user, get_db, require_permission
 from app.common.permissions import Categories, Events, EventTypes
 from app.common.refine import refine_list_response
 from app.common.responses import ApiResponse, MessageResponse
@@ -118,7 +118,7 @@ async def list_event_types(
 
 
 @events_router.get("/types/{event_type_id}", response_model=ApiResponse[EventTypeRead])
-async def get_event(
+async def get_event_type(
     event_type_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(EventTypes.Show)),
@@ -186,7 +186,10 @@ async def list_events(
     current_user: User = Depends(require_permission(Events.List)),
 ):
     """List all events."""
-    query = db.query(Event)
+    if current_user and check_permissions_user(current_user, [Events.ListAll]):
+        query = db.query(Event)
+    else:
+        query = db.query(Event).filter(Event.is_published)
     results, total = refine_query(query, Event, pagination)
     return refine_list_response(response, results, total)
 
