@@ -61,6 +61,7 @@ class EventBase(BaseModel):
 
     location_id: str | None = None
     category_id: str | None = None
+    file_id: str | None = None
     event_type_id: str | None = None
 
 
@@ -76,6 +77,7 @@ class EventUpdate(BaseModel):
 
     location_id: str | None = None
     category_id: str | None = None
+    file_id: str | None = None
     event_type_id: str | None = None
 
 

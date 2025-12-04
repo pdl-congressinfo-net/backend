@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     EMAILS_FROM_EMAIL: str = os.getenv("EMAILS_FROM_EMAIL", "info@dpl.at")
     EMAILS_FROM_NAME: str = os.getenv("PROJECT_NAME", "Congress Info API")
 
+    SFTP_HOST: str = os.getenv("SFTP_HOST", "")
+    SFTP_PORT: int = int(os.getenv("SFTP_PORT", "22"))
+    SFTP_USER: str = os.getenv("SFTP_USER", "")
+    SFTP_PASSWORD: str = os.getenv("SFTP_PASSWORD", "")
+    SFTP_DIRECTORY: str = os.getenv("SFTP_DIRECTORY", "/uploads")
+
     @property
     def emails_enabled(self) -> bool:
         return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
