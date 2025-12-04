@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.api.v1.locations.schema import (
@@ -15,10 +15,9 @@ from app.common.deps import get_db, require_permission
 from app.common.permissions import Countries, Locations, LocationTypes
 from app.common.refine import refine_list_response
 from app.common.responses import ApiResponse, MessageResponse
-from app.features.locations.model import Country, Location, LocationType
+from app.features.locations import service
 from app.features.users.model import User
 from app.utils.pagination import PaginationParams
-from app.utils.refine_query import refine_query
 
 locations_router = APIRouter()
 
@@ -31,9 +30,7 @@ async def list_locations_types(
     current_user: User = Depends(require_permission(LocationTypes.List)),
 ):
     """List all locations types."""
-    query = db.query(LocationType)
-    results, total = refine_query(query, LocationType, pagination)
-    return refine_list_response(response, results, total)
+    return service.list_location_types(db, pagination)
 
 
 @locations_router.get(
@@ -45,11 +42,7 @@ async def get_location_type(
     current_user: User = Depends(require_permission(LocationTypes.Show)),
 ):
     """Get location type by ID."""
-    location_type = (
-        db.query(LocationType).filter(LocationType.id == location_type_id).first()
-    )
-    if not location_type:
-        raise HTTPException(status_code=404, detail="Location type not found")
+    location_type = service.get_location_type(db, location_type_id)
     return ApiResponse(data=location_type)
 
 
@@ -60,10 +53,7 @@ async def create_location_type(
     current_user: User = Depends(require_permission(LocationTypes.Create)),
 ):
     """Create a new location type."""
-    db_location_type = LocationType.model_validate(location_type)
-    db.add(db_location_type)
-    db.commit()
-    db.refresh(db_location_type)
+    db_location_type = service.create_location_type(db, location_type)
     return ApiResponse(data=db_location_type)
 
 
@@ -77,16 +67,7 @@ async def update_location_type(
     current_user: User = Depends(require_permission(LocationTypes.Update)),
 ):
     """Update an existing location type."""
-    db_location_type = (
-        db.query(LocationType).filter(LocationType.id == location_type_id).first()
-    )
-    if not db_location_type:
-        raise HTTPException(status_code=404, detail="Location type not found")
-    for key, value in location_type.model_dump(exclude_unset=True).items():
-        setattr(db_location_type, key, value)
-    db.add(db_location_type)
-    db.commit()
-    db.refresh(db_location_type)
+    db_location_type = service.update_location_type(db, location_type_id, location_type)
     return ApiResponse(data=db_location_type)
 
 
@@ -97,13 +78,7 @@ async def delete_location_type(
     current_user: User = Depends(require_permission(LocationTypes.Delete)),
 ):
     """Delete a location type."""
-    db_location_type = (
-        db.query(LocationType).filter(LocationType.id == location_type_id).first()
-    )
-    if not db_location_type:
-        raise HTTPException(status_code=404, detail="Location type not found")
-    db.delete(db_location_type)
-    db.commit()
+    service.delete_location_type(db, location_type_id)
     return MessageResponse(message="Location type deleted successfully")
 
 
@@ -115,9 +90,7 @@ async def list_countries(
     current_user: User = Depends(require_permission(Countries.List)),
 ):
     """List all countries."""
-    query = db.query(Country)
-    results, total = refine_query(query, Country, pagination)
-    return refine_list_response(response, results, total)
+    return service.list_countries(db, pagination)
 
 
 @locations_router.get(
@@ -129,9 +102,7 @@ async def get_country(
     current_user: User = Depends(require_permission(Countries.Show)),
 ):
     """Get country by ID."""
-    country = db.query(Country).filter(Country.id == country_id).first()
-    if not country:
-        raise HTTPException(status_code=404, detail="Country not found")
+    country = service.get_country(db, country_id)
     return ApiResponse(data=country)
 
 
@@ -142,10 +113,7 @@ async def create_country(
     current_user: User = Depends(require_permission(Countries.Create)),
 ):
     """Create a new country."""
-    db_country = Country.model_validate(country)
-    db.add(db_country)
-    db.commit()
-    db.refresh(db_country)
+    db_country = service.create_country(db, country)
     return ApiResponse(data=db_country)
 
 
@@ -159,14 +127,7 @@ async def update_country(
     current_user: User = Depends(require_permission(Countries.Update)),
 ):
     """Update an existing country."""
-    db_country = db.query(Country).filter(Country.id == country_id).first()
-    if not db_country:
-        raise HTTPException(status_code=404, detail="Country not found")
-    for key, value in country.model_dump(exclude_unset=True).items():
-        setattr(db_country, key, value)
-    db.add(db_country)
-    db.commit()
-    db.refresh(db_country)
+    db_country = service.update_country(db, country_id, country)
     return ApiResponse(data=db_country)
 
 
@@ -177,11 +138,7 @@ async def delete_country(
     current_user: User = Depends(require_permission(Countries.Delete)),
 ):
     """Delete a country."""
-    db_country = db.query(Country).filter(Country.id == country_id).first()
-    if not db_country:
-        raise HTTPException(status_code=404, detail="Country not found")
-    db.delete(db_country)
-    db.commit()
+    service.delete_country(db, country_id)
     return MessageResponse(message="Country deleted successfully")
 
 
@@ -193,8 +150,7 @@ async def list_locations(
     current_user: User = Depends(require_permission(Locations.List)),
 ):
     """List all locations."""
-    query = db.query(Location)
-    results, total = refine_query(query, Location, pagination)
+    results, total = service.list_locations(db, pagination)
     return refine_list_response(response, results, total)
 
 
@@ -205,9 +161,7 @@ async def get_location(
     current_user: User = Depends(require_permission(Locations.Show)),
 ):
     """Get location by ID."""
-    location = db.query(Location).filter(Location.id == location_id).first()
-    if not location:
-        raise HTTPException(status_code=404, detail="Location not found")
+    location = service.get_location(db, location_id)
     return ApiResponse(data=location)
 
 
@@ -218,10 +172,7 @@ async def create_location(
     current_user: User = Depends(require_permission(Locations.Create)),
 ):
     """Create a new location."""
-    db_location = Location.model_validate(location)
-    db.add(db_location)
-    db.commit()
-    db.refresh(db_location)
+    db_location = service.create_location(db, location)
     return ApiResponse(data=db_location)
 
 
@@ -233,14 +184,7 @@ async def update_location(
     current_user: User = Depends(require_permission(Locations.Update)),
 ):
     """Update an existing location."""
-    db_location = db.query(Location).filter(Location.id == location_id).first()
-    if not db_location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    for key, value in location.model_dump(exclude_unset=True).items():
-        setattr(db_location, key, value)
-    db.add(db_location)
-    db.commit()
-    db.refresh(db_location)
+    db_location = service.update_location(db, location_id, location)
     return ApiResponse(data=db_location)
 
 
@@ -251,9 +195,5 @@ async def delete_location(
     current_user: User = Depends(require_permission(Locations.Delete)),
 ):
     """Delete a location."""
-    db_location = db.query(Location).filter(Location.id == permission_id).first()
-    if not db_location:
-        raise HTTPException(status_code=404, detail="Location not found")
-    db.delete(db_location)
-    db.commit()
+    service.delete_location(db, location_id)
     return MessageResponse(message="Location deleted successfully")
