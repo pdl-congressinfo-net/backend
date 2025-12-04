@@ -18,7 +18,9 @@ class File(SQLModel, table=True):
     size: int = Field()
     created_at: datetime = Field()
     updated_at: datetime = Field()
-    uploaded_by_id: str = Field(foreign_key="users.id", max_length=36)
+    user_id: str = Field(foreign_key="users.id", max_length=36)
+    relation_id: str | None = Field(default=None, index=True, max_length=36)
+    purpose: str = Field(max_length=100)
     location: str = Field(index=True)
     external: bool = Field(default=False)
 

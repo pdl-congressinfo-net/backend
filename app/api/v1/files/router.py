@@ -4,7 +4,6 @@ from datetime import datetime
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
     Response,
     UploadFile,
 )
@@ -16,10 +15,13 @@ from sqlalchemy.orm import Session
 from app.api.v1.files.schema import FileRead
 from app.common.deps import get_db, require_permission
 from app.common.permissions import Files
+from app.common.refine import refine_list_response
+from app.common.responses import MessageResponse
 from app.core.config import settings
-from app.core.files import sftp_connect
+from app.features.files import service
 from app.features.files.model import File as FileModel
 from app.features.users.model import User
+from app.utils.pagination import PaginationParams
 
 files_router = APIRouter()
 
@@ -35,18 +37,6 @@ async def upload_file(
     file_id = str(uuid.uuid4())
     sftp_filename = f"{file_id}_{uploaded_file.filename}"
     remote_path = f"{settings.SFTP_DIRECTORY}/{sftp_filename}"
-
-    # Upload to SFTP
-    try:
-        sftp = sftp_connect()
-
-        with sftp.file(remote_path, "wb") as f:
-            f.write(contents)
-
-        sftp.close()
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"SFTP upload failed: {str(e)}")
 
     # Save DB metadata
     now = datetime.utcnow()
@@ -71,11 +61,13 @@ async def upload_file(
 
 @files_router.get("", response_model=list[FileRead])
 async def list_files(
+    response: Response,
     db: Session = Depends(get_db),
+    pagination: PaginationParams = Depends(),
     current_user: User = Depends(require_permission(Files.List)),
 ):
-    files = db.query(FileModel).all()
-    return files
+    files, total = service.list_files(db, pagination)
+    return refine_list_response(response, files, total)
 
 
 @files_router.get("/{file_id}", response_model=FileRead)
@@ -84,10 +76,7 @@ async def get_file(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Files.Show)),
 ):
-    file = db.query(FileModel).filter(FileModel.id == file_id).first()
-    if not file:
-        raise HTTPException(status_code=404, detail="File not found")
-
+    file = service.get_file(db, file_id)
     return file
 
 
@@ -97,45 +86,21 @@ async def download_file(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Files.Download)),
 ):
-    file = db.query(FileModel).filter(FileModel.id == file_id).first()
-    if not file:
-        raise HTTPException(status_code=404, detail="File not found")
-
-    # Download from SFTP
-    try:
-        sftp = sftp_connect()
-        with sftp.file(file.location, "rb") as f:
-            data = f.read()
-        sftp.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"SFTP download failed: {str(e)}")
+    file = service.get_file(db, file_id)
 
     return Response(
-        content=data,
+        content="await service.download_file_contents(file.location)",
         media_type="application/octet-stream",
         headers={"Content-Disposition": f"attachment; filename={file.name}"},
     )
 
 
-@files_router.delete("/{file_id}", status_code=204)
+@files_router.delete("/{file_id}", response_model=MessageResponse)
 async def delete_file(
     file_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Files.Delete)),
 ):
-    file = db.query(FileModel).filter(FileModel.id == file_id).first()
-    if not file:
-        raise HTTPException(status_code=404, detail="File not found")
+    service.delete_file(db, file_id)
 
-    # Delete from SFTP
-    try:
-        sftp = sftp_connect()
-        sftp.remove(file.location)
-        sftp.close()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"SFTP delete failed: {str(e)}")
-
-    db.delete(file)
-    db.commit()
-
-    return Response(status_code=204)
+    return MessageResponse(message="File deleted successfully")
