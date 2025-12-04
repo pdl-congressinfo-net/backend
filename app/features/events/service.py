@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from app.common.deps import check_permissions_user
 from app.common.exceptions import NotFoundError
 from app.common.permissions import Events
@@ -20,12 +22,12 @@ def get_category(db, category_id: str):
     return category
 
 
-def create_category(db, payload):
+def create_category(db, payload: BaseModel):
     category = Category.model_validate(payload)
     return repo.create_category(db, category)
 
 
-def update_category(db, category_id: str, payload):
+def update_category(db, category_id: str, payload: BaseModel):
     category = repo.get_category_by_id(db, category_id)
     if not category:
         raise NotFoundError("Event category not found")
@@ -58,7 +60,7 @@ def get_event_type(db, event_type_id: str):
     return event_type
 
 
-def create_event_type(db, payload):
+def create_event_type(db, payload: BaseModel):
     event_type = EventType.model_validate(payload)
     return repo.create_event_type(db, event_type)
 
@@ -97,7 +99,7 @@ def get_event(db, event_id):
     return event
 
 
-def create_event(db, payload):
+def create_event(db, payload: BaseModel):
     event = Event.model_validate(payload)
     return repo.create_event(db, event)
 
