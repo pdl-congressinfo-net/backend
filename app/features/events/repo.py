@@ -4,11 +4,10 @@ from app.features.events.model import Category, Event, EventType
 from app.utils.pagination import PaginationParams
 from app.utils.refine_query import refine_query
 
+
 # =========================
 # CATEGORY REPO
 # =========================
-
-
 def list_categories(db: Session, pagination: PaginationParams):
     query = db.query(Category)
     return refine_query(query, Category, pagination)
@@ -41,8 +40,6 @@ def delete_category(db: Session, category: Category):
 # =========================
 # EVENT TYPE REPO
 # =========================
-
-
 def list_event_types(db: Session, pagination: PaginationParams):
     query = db.query(EventType)
     return refine_query(query, EventType, pagination)
@@ -75,8 +72,6 @@ def delete_event_type(db: Session, event_type: EventType):
 # =========================
 # EVENT REPO
 # =========================
-
-
 def list_events(db: Session, can_view_all: bool, pagination: PaginationParams):
     query = db.query(Event)
     if not can_view_all:
