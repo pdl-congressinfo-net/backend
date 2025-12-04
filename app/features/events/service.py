@@ -6,11 +6,10 @@ from app.common.permissions import Events
 from app.features.events import repo
 from app.features.events.model import Category, Event, EventType
 
+
 # =========================
 # CATEGORY SERVICE
 # =========================
-
-
 def list_categories(db, pagination):
     return repo.list_categories(db, pagination)
 
@@ -47,8 +46,6 @@ def delete_category(db, category_id: str):
 # =========================
 # EVENT TYPE SERVICE
 # =========================
-
-
 def list_event_types(db, pagination):
     return repo.list_event_types(db, pagination)
 
@@ -85,8 +82,6 @@ def delete_event_type(db, event_type_id: str):
 # =========================
 # EVENT SERVICE
 # =========================
-
-
 def list_events(db, user, pagination):
     can_view_all = check_permissions_user(user, [Events.ListAll])
     return repo.list_events(db, can_view_all, pagination)
