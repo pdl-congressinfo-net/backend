@@ -1,92 +1,67 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-from app.api.v1.events.schema import (
-    CategoryCreate,
-    CategoryRead,
-    CategoryUpdate,
-    EventCreate,
-    EventRead,
-    EventTypeCreate,
-    EventTypeRead,
-    EventTypeUpdate,
-    EventUpdate,
-)
-from app.common.deps import check_permissions_user, get_db, require_permission
+from app.api.v1.events import schema
+from app.common.deps import get_db, require_permission
 from app.common.permissions import Categories, Events, EventTypes
 from app.common.refine import refine_list_response
 from app.common.responses import ApiResponse, MessageResponse
-from app.features.events.model import Category, Event, EventType
+from app.features.events import service
 from app.features.users.model import User
 from app.utils.pagination import PaginationParams
-from app.utils.refine_query import refine_query
 
 events_router = APIRouter()
 
 
-@events_router.get("/categories", response_model=list[CategoryRead])
+# =========================
+# CATEGORIES
+# =========================
+
+
+@events_router.get("/categories", response_model=list[schema.CategoryRead])
 async def list_event_categories(
     response: Response,
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.List)),
 ):
-    """List all event categories."""
-    query = db.query(Category)
-    print(query)
-    results, total = refine_query(query, Category, pagination)
-    print(results)
+    results, total = service.list_categories(db, pagination)
     return refine_list_response(response, results, total)
 
 
 @events_router.get(
-    "/categories/{category_id}", response_model=ApiResponse[CategoryRead]
+    "/categories/{category_id}", response_model=ApiResponse[schema.CategoryRead]
 )
 async def get_event_category(
     category_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Categories.Show)),
 ):
-    """Get event category by ID."""
-    category = db.query(Category).filter(Category.id == category_id).first()
-    if not category:
-        raise HTTPException(status_code=404, detail="Event category not found")
+    category = service.get_category(db, category_id)
     return ApiResponse(data=category)
 
 
-@events_router.post("/categories", response_model=ApiResponse[CategoryRead])
+@events_router.post("/categories", response_model=ApiResponse[schema.CategoryRead])
 async def create_event_category(
-    category: CategoryCreate,
+    category: schema.CategoryCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Categories.Create)),
 ):
-    """Create a new event category."""
-    db_category = Category.model_validate(category)
-    db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    return ApiResponse(data=db_category)
+    category = service.create_category(db, category)
+    return ApiResponse(data=category)
 
 
 @events_router.put(
-    "/categories/{category_id}", response_model=ApiResponse[CategoryRead]
+    "/categories/{category_id}", response_model=ApiResponse[schema.CategoryRead]
 )
 async def update_event_category(
     category_id: str,
-    category: CategoryUpdate,
+    category: schema.CategoryUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Categories.Update)),
 ):
-    """Update an existing event category."""
-    db_category = db.query(Category).filter(Category.id == category_id).first()
-    if not db_category:
-        raise HTTPException(status_code=404, detail="Event category not found")
-    for key, value in category.model_dump(exclude_unset=True).items():
-        setattr(db_category, key, value)
-    db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    return ApiResponse(data=db_category)
+    category = service.update_category(db, category_id, category)
+    return ApiResponse(data=category)
 
 
 @events_router.delete("/categories/{category_id}", response_model=MessageResponse)
@@ -95,72 +70,59 @@ async def delete_event_category(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Categories.Delete)),
 ):
-    """Delete an event category."""
-    db_category = db.query(Category).filter(Category.id == category_id).first()
-    if not db_category:
-        raise HTTPException(status_code=404, detail="Event category not found")
-    db.delete(db_category)
-    db.commit()
+    service.delete_category(db, category_id)
     return MessageResponse(message="Event category deleted successfully")
 
 
-@events_router.get("/types", response_model=list[EventTypeRead])
+# =========================
+# EVENT TYPES
+# =========================
+
+
+@events_router.get("/types", response_model=list[schema.EventTypeRead])
 async def list_event_types(
     response: Response,
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(EventTypes.List)),
 ):
-    """List all event types."""
-    query = db.query(EventType)
-    results, total = refine_query(query, EventType, pagination)
+    results, total = service.list_event_types(db, pagination)
     return refine_list_response(response, results, total)
 
 
-@events_router.get("/types/{event_type_id}", response_model=ApiResponse[EventTypeRead])
+@events_router.get(
+    "/types/{event_type_id}", response_model=ApiResponse[schema.EventTypeRead]
+)
 async def get_event_type(
     event_type_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(EventTypes.Show)),
 ):
-    """Get event type by ID."""
-    event_type = db.query(EventType).filter(EventType.id == event_type_id).first()
-    if not event_type:
-        raise HTTPException(status_code=404, detail="Event type not found")
+    event_type = service.get_event_type(db, event_type_id)
     return ApiResponse(data=event_type)
 
 
-@events_router.post("/types", response_model=ApiResponse[EventTypeRead])
+@events_router.post("/types", response_model=ApiResponse[schema.EventTypeRead])
 async def create_event_type(
-    event_type: EventTypeCreate,
+    event_type: schema.EventTypeCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(EventTypes.Create)),
 ):
-    """Create a new event type."""
-    db_event_type = EventType.model_validate(event_type)
-    db.add(db_event_type)
-    db.commit()
-    db.refresh(db_event_type)
-    return ApiResponse(data=db_event_type)
+    event_type = service.create_event_type(db, event_type)
+    return ApiResponse(data=event_type)
 
 
-@events_router.put("/types/{event_type_id}", response_model=ApiResponse[EventTypeRead])
+@events_router.put(
+    "/types/{event_type_id}", response_model=ApiResponse[schema.EventTypeRead]
+)
 async def update_event_type(
     event_type_id: str,
-    event_type: EventTypeUpdate,
+    event_type: schema.EventTypeUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(EventTypes.Update)),
 ):
-    """Update an existing event type."""
-    db_event_type = db.query(EventType).filter(EventType.id == event_type_id).first()
-    if not db_event_type:
-        raise HTTPException(status_code=404, detail="Event type not found")
-    for key, value in event_type.model_dump(exclude_unset=True).items():
-        setattr(db_event_type, key, value)
-    db.add(db_event_type)
-    db.commit()
-    db.refresh(db_event_type)
-    return ApiResponse(data=db_event_type)
+    event_type = service.update_event_type(db, event_type_id, event_type)
+    return ApiResponse(data=event_type)
 
 
 @events_router.delete("/types/{event_type_id}", response_model=MessageResponse)
@@ -169,75 +131,55 @@ async def delete_event_type(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(EventTypes.Delete)),
 ):
-    """Delete an event type."""
-    db_event_type = db.query(EventType).filter(EventType.id == event_type_id).first()
-    if not db_event_type:
-        raise HTTPException(status_code=404, detail="Event type not found")
-    db.delete(db_event_type)
-    db.commit()
+    service.delete_event_type(db, event_type_id)
     return MessageResponse(message="Event type deleted successfully")
 
 
-@events_router.get("", response_model=list[EventRead])
+# =========================
+# EVENTS
+# =========================
+
+
+@events_router.get("", response_model=list[schema.EventRead])
 async def list_events(
     response: Response,
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.List)),
 ):
-    """List all events."""
-    if current_user and check_permissions_user(current_user, [Events.ListAll]):
-        query = db.query(Event)
-    else:
-        query = db.query(Event).filter(Event.is_published)
-    results, total = refine_query(query, Event, pagination)
+    results, total = service.list_events(db, current_user, pagination)
     return refine_list_response(response, results, total)
 
 
-@events_router.get("/{event_id}", response_model=ApiResponse[EventRead])
+@events_router.get("/{event_id}", response_model=ApiResponse[schema.EventRead])
 async def get_event(
     event_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.Show)),
 ):
-    """Get event by ID."""
-    event = db.query(Event).filter(Event.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
+    event = service.get_event(db, event_id)
     return ApiResponse(data=event)
 
 
-@events_router.post("", response_model=ApiResponse[EventRead])
+@events_router.post("", response_model=ApiResponse[schema.EventRead])
 async def create_event(
-    event: EventCreate,
+    event: schema.EventCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.Create)),
 ):
-    """Create a new event."""
-    db_event = Event.model_validate(event)
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-    return ApiResponse(data=db_event)
+    event = service.create_event(db, event)
+    return ApiResponse(data=event)
 
 
-@events_router.put("/{event_id}", response_model=ApiResponse[EventRead])
+@events_router.put("/{event_id}", response_model=ApiResponse[schema.EventRead])
 async def update_event(
     event_id: str,
-    event: EventUpdate,
+    event: schema.EventUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.Update)),
 ):
-    """Update an existing event."""
-    db_event = db.query(Event).filter(Event.id == event_id).first()
-    if not db_event:
-        raise HTTPException(status_code=404, detail="Event not found")
-    for key, value in event.model_dump(exclude_unset=True).items():
-        setattr(db_event, key, value)
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-    return ApiResponse(data=db_event)
+    event = service.update_event(db, event_id, event)
+    return ApiResponse(data=event)
 
 
 @events_router.delete("/{event_id}", response_model=MessageResponse)
@@ -246,10 +188,5 @@ async def delete_event(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.Delete)),
 ):
-    """Delete an event."""
-    db_event = db.query(Event).filter(Event.id == event_id).first()
-    if not db_event:
-        raise HTTPException(status_code=404, detail="Event not found")
-    db.delete(db_event)
-    db.commit()
+    service.delete_event(db, event_id)
     return MessageResponse(message="Event deleted successfully")

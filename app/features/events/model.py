@@ -42,7 +42,7 @@ class Event(SQLModel, table=True):
     name: str = Field()
     start_date: datetime
     end_date: datetime
-    is_published: bool = Field(default=False)
+    is_public: bool = Field(default=False)
 
     location_id: Optional[str] = Field(default=None, foreign_key="locations.id")  # noqa: UP045
     category_id: Optional[str] = Field(default=None, foreign_key="categories.id")  # noqa: UP045
