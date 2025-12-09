@@ -140,7 +140,8 @@ def check_permissions_user(
 ) -> bool:
     """Check if user has all required permissions"""
     user_permissions = service_get_user_permissions(db, user.id, True)
-    return all(perm in user_permissions for perm in required_permissions)
+    user_permission_names = [perm.name for perm in user_permissions]
+    return all(perm in user_permission_names for perm in required_permissions)
 
 
 def get_role_permissions(role: str, db: Session) -> list[str]:

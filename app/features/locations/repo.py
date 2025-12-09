@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.features.locations.model import Location, LocationType
+from app.features.locations.model import Country, Location, LocationType
 from app.utils.pagination import PaginationParams
 from app.utils.refine_query import refine_query
 
@@ -9,22 +9,22 @@ from app.utils.refine_query import refine_query
 # COUNTRY REPO
 # =========================
 def list_countries(db: Session, pagination: PaginationParams):
-    query = db.query(Location.Country)
-    return refine_query(query, Location.Country, pagination)
+    query = db.query(Country)
+    return refine_query(query, Country, pagination)
 
 
 def get_country_by_id(db: Session, country_id: str):
-    return db.query(Location.Country).filter(Location.Country.id == country_id).first()
+    return db.query(Country).filter(Country.id == country_id).first()
 
 
-def create_country(db: Session, country: Location.Country):
+def create_country(db: Session, country: Country):
     db.add(country)
     db.commit()
     db.refresh(country)
     return country
 
 
-def update_country(db: Session, country: Location.Country, updates: dict):
+def update_country(db: Session, country: Country, updates: dict):
     for key, value in updates.items():
         setattr(country, key, value)
     db.commit()
@@ -32,7 +32,7 @@ def update_country(db: Session, country: Location.Country, updates: dict):
     return country
 
 
-def delete_country(db: Session, country: Location.Country):
+def delete_country(db: Session, country: Country):
     db.delete(country)
     db.commit()
 

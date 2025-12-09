@@ -30,7 +30,8 @@ async def list_locations_types(
     current_user: User = Depends(require_permission(LocationTypes.List)),
 ):
     """List all locations types."""
-    return service.list_location_types(db, pagination)
+    location_types, total = service.list_location_types(db, pagination)
+    return refine_list_response(response, location_types, total)
 
 
 @locations_router.get(
@@ -90,7 +91,8 @@ async def list_countries(
     current_user: User = Depends(require_permission(Countries.List)),
 ):
     """List all countries."""
-    return service.list_countries(db, pagination)
+    countries, total = service.list_countries(db, pagination)
+    return refine_list_response(response, countries, total)
 
 
 @locations_router.get(

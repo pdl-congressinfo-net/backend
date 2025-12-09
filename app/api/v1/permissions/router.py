@@ -24,8 +24,8 @@ async def list_permissions(
     current_user: User = Depends(require_permission(Permissions.List)),
 ):
     """List all permissions."""
-    permissions = service.list_permissions(db, pagination)
-    return refine_list_response(response, permissions, pagination)
+    permissions, total = service.list_permissions(db, pagination)
+    return refine_list_response(response, permissions, total)
 
 
 @permissions_router.get(
