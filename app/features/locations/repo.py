@@ -1,101 +1,195 @@
+"""Repository layer for Location database operations."""
+
 from sqlalchemy.orm import Session
 
-from app.features.locations.model import Country, Location, LocationType
+from app.features.locations.model import Location
 from app.utils.pagination import PaginationParams
 from app.utils.refine_query import refine_query
 
 
-# =========================
-# COUNTRY REPO
-# =========================
-def list_countries(db: Session, pagination: PaginationParams):
-    query = db.query(Country)
-    return refine_query(query, Country, pagination)
+class LocationRepository:
+    """Repository for Location CRUD operations."""
 
+    def __init__(self, db: Session):
+        """Initialize repository with database session.
 
-def get_country_by_id(db: Session, country_id: str):
-    return db.query(Country).filter(Country.id == country_id).first()
+        Args:
+            db: SQLAlchemy database session
+        """
+        self.db = db
 
+    def get_by_id(self, location_id: str) -> Location | None:
+        """Retrieve a location by its ID.
 
-def create_country(db: Session, country: Country):
-    db.add(country)
-    db.commit()
-    db.refresh(country)
-    return country
+        Args:
+            location_id: The UUID of the location
 
+        Returns:
+            Location if found, None otherwise
+        """
+        return self.db.query(Location).filter(Location.id == location_id).first()
 
-def update_country(db: Session, country: Country, updates: dict):
-    for key, value in updates.items():
-        setattr(country, key, value)
-    db.commit()
-    db.refresh(country)
-    return country
+    def get_by_name(self, name: str) -> Location | None:
+        """Retrieve a location by its name.
 
+        Args:
+            name: The name of the location
 
-def delete_country(db: Session, country: Country):
-    db.delete(country)
-    db.commit()
+        Returns:
+            Location if found, None otherwise
+        """
+        return self.db.query(Location).filter(Location.name == name).first()
 
+    def list(self, pagination: PaginationParams):
+        """List all locations with pagination.
 
-# =========================
-# LOCATION TYPE REPO
-# =========================
-def list_location_types(db: Session, pagination: PaginationParams):
-    query = db.query(LocationType)
-    return refine_query(query, LocationType, pagination)
+        Args:
+            pagination: Pagination parameters for the query
 
+        Returns:
+            Tuple of (list of Location objects, total count)
+        """
+        query = self.db.query(Location)
+        return refine_query(query, Location, pagination)
 
-def get_location_type_by_id(db: Session, location_type_id: str):
-    return db.query(LocationType).filter(LocationType.id == location_type_id).first()
+    def list_by_country(
+        self, country_id: str, pagination: PaginationParams
+    ):
+        """List all locations in a specific country.
 
+        Args:
+            country_id: The UUID of the country
+            pagination: Pagination parameters
 
-def create_location_type(db: Session, location_type: LocationType):
-    db.add(location_type)
-    db.commit()
-    db.refresh(location_type)
-    return location_type
+        Returns:
+            Tuple of (list of Location objects, total count)
+        """
+        query = self.db.query(Location).filter(Location.country_id == country_id)
+        return refine_query(query, Location, pagination)
 
+    def list_by_location_type(
+        self, location_type_id: str, pagination: PaginationParams
+    ):
+        """List all locations of a specific type.
 
-def update_location_type(db: Session, location_type: LocationType, updates: dict):
-    for key, value in updates.items():
-        setattr(location_type, key, value)
-    db.commit()
-    db.refresh(location_type)
-    return location_type
+        Args:
+            location_type_id: The UUID of the location type
+            pagination: Pagination parameters
 
+        Returns:
+            Tuple of (list of Location objects, total count)
+        """
+        query = self.db.query(Location).filter(Location.location_type_id == location_type_id)
+        return refine_query(query, Location, pagination)
 
-def delete_location_type(db: Session, location_type: LocationType):
-    db.delete(location_type)
-    db.commit()
+    def list_by_city(self, city: str, pagination: PaginationParams):
+        """List all locations in a specific city.
 
+        Args:
+            city: The city name
+            pagination: Pagination parameters
 
-# =========================
-# LOCATION REPO
-# =========================
-def list_locations(db: Session, pagination: PaginationParams):
-    query = db.query(Location)
-    return refine_query(query, Location, pagination)
+        Returns:
+            Tuple of (list of Location objects, total count)
+        """
+        query = self.db.query(Location).filter(Location.city == city)
+        return refine_query(query, Location, pagination)
 
+    def create(self, location: Location) -> Location:
+        """Create a new location.
 
-def get_location_by_id(db: Session, location_id: str):
-    return db.query(Location).filter(Location.id == location_id).first()
+        Args:
+            location: Location instance to create
 
+        Returns:
+            The created Location
+        """
+        self.db.add(location)
+        self.db.commit()
+        self.db.refresh(location)
+        return location
 
-def create_location(db: Session, location: Location):
-    db.add(location)
-    db.commit()
-    db.refresh(location)
-    return location
+    def update(self, location: Location) -> Location:
+        """Update an existing location.
 
+        Args:
+            location: Location instance with updated data
 
-def update_location(db: Session, location: Location, updates: dict):
-    for key, value in updates.items():
-        setattr(location, key, value)
-    db.commit()
-    db.refresh(location)
-    return location
+        Returns:
+            The updated Location
+        """
+        self.db.add(location)
+        self.db.commit()
+        self.db.refresh(location)
+        return location
 
+    def delete(self, location_id: str) -> bool:
+        """Delete a location by ID.
 
-def delete_location(db: Session, location: Location):
-    db.delete(location)
-    db.commit()
+        Args:
+            location_id: The UUID of the location to delete
+
+        Returns:
+            True if deleted successfully, False if not found
+        """
+        location = self.get_by_id(location_id)
+        if location:
+            self.db.delete(location)
+            self.db.commit()
+            return True
+        return False
+
+    def search(self, query: str, pagination: PaginationParams):
+        """Search locations by name, city, or address fields.
+
+        Args:
+            query: Search string to match against various location fields
+            pagination: Pagination parameters
+
+        Returns:
+            Tuple of (list of matching Location objects, total count)
+        """
+        db_query = self.db.query(Location).filter(
+            (Location.name.ilike(f"%{query}%")) |
+            (Location.city.ilike(f"%{query}%")) |
+            (Location.road.ilike(f"%{query}%")) |
+            (Location.state.ilike(f"%{query}%")) |
+            (Location.postal_code.ilike(f"%{query}%"))
+        )
+        return refine_query(db_query, Location, pagination)
+
+    def find_nearby(
+        self,
+        latitude: float,
+        longitude: float,
+        radius_km: float,
+        pagination: PaginationParams
+    ):
+        """Find locations within a certain radius of given coordinates.
+
+        Note: This is a simple implementation. For production use, consider
+        using PostGIS or similar spatial database extensions.
+
+        Args:
+            latitude: Latitude coordinate
+            longitude: Longitude coordinate
+            radius_km: Search radius in kilometers
+            pagination: Pagination parameters
+
+        Returns:
+            Tuple of (list of Location objects within the radius, total count)
+        """
+        # Approximate degrees per km (varies by latitude)
+        degree_per_km = 1 / 111.0
+        lat_range = radius_km * degree_per_km
+        lon_range = radius_km * degree_per_km
+
+        db_query = self.db.query(Location).filter(
+            (Location.latitude.isnot(None)) &
+            (Location.longitude.isnot(None)) &
+            (Location.latitude >= latitude - lat_range) &
+            (Location.latitude <= latitude + lat_range) &
+            (Location.longitude >= longitude - lon_range) &
+            (Location.longitude <= longitude + lon_range)
+        )
+        return refine_query(db_query, Location, pagination)

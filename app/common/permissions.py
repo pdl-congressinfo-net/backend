@@ -44,6 +44,14 @@ class Countries(Permission, resource="countries"):
     pass
 
 
+class LocationTypes(Permission, resource="locationtypes"):
+    pass
+
+
+class Locations(Permission, resource="locations"):
+    pass
+
+
 class Events(Permission, resource="events"):
     @classproperty
     def Participate(cls) -> str:
@@ -55,14 +63,6 @@ class Events(Permission, resource="events"):
 
 
 class EventTypes(Permission, resource="eventtypes"):
-    pass
-
-
-class Locations(Permission, resource="locations"):
-    pass
-
-
-class LocationTypes(Permission, resource="locationtypes"):
     pass
 
 
