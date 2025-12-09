@@ -1,26 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-from app.api.v1.users.schema import (
-    UserPermissionCreate,
-    UserPermissionRead,
-    UserRead,
-    UserRoleCreate,
-    UserRoleRead,
-    UserUpdate,
-)
+from app.api.v1.users import schema
 from app.common.deps import get_db, require_permission
 from app.common.permissions import UserPermissions, UserRoles, Users
 from app.common.refine import refine_list_response
 from app.common.responses import ApiResponse, MessageResponse
-from app.features.users.model import User, UserPermission, UserRole
+from app.features.users import service
+from app.features.users.model import User
 from app.utils.pagination import PaginationParams
-from app.utils.refine_query import refine_query
 
 users_router = APIRouter()
 
 
-@users_router.get("/me", response_model=ApiResponse[UserRead])
+@users_router.get("/me", response_model=ApiResponse[schema.UserRead])
 async def read_current_user(
     current_user: User = Depends(require_permission(Users.ShowMe)),
 ):
@@ -28,7 +21,7 @@ async def read_current_user(
     return ApiResponse(data=current_user)
 
 
-@users_router.get("/roles", response_model=list[UserRoleRead])
+@users_router.get("/roles", response_model=list[schema.UserRoleRead])
 async def list_user_roles(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -36,39 +29,31 @@ async def list_user_roles(
     current_user: User = Depends(require_permission(UserRoles.List)),
 ):
     """List roles for the current user."""
-    query = db.query(UserRole)
-    results, total = refine_query(query, UserRole, pagination)
+    results, total = service.list_user_roles(db, pagination)
     return refine_list_response(response, results, total)
 
 
-@users_router.get("/roles/{user_id}", response_model=ApiResponse[UserRoleRead])
+@users_router.get("/roles/{user_id}", response_model=ApiResponse[schema.UserRoleRead])
 async def get_user_roles(
     user_id: str,
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(UserRoles.Show)),
 ):
     """Get roles for a specific user."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = service.get_user_roles(db, user_id, pagination)
     return ApiResponse(data=user.roles)
 
 
-@users_router.post("/roles", response_model=ApiResponse[UserRoleRead])
+@users_router.post("/roles", response_model=ApiResponse[schema.UserRoleRead])
 async def create_user_role(
-    user_role: UserRoleCreate,
+    user_role: schema.UserRoleCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(UserRoles.Create)),
 ):
     """Create a new user role."""
-    db_user = db.query(User).filter(User.id == user_role.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    db_user.roles.append(user_role)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return ApiResponse(data=user_role)
+    db_roles = service.assign_user_role(db, user_role.user_id, user_role.role_id)
+    return ApiResponse(data=db_roles)
 
 
 @users_router.delete("/roles/{user_id}/{role_id}", response_model=MessageResponse)
@@ -79,19 +64,11 @@ async def delete_user_role(
     current_user: User = Depends(require_permission(UserRoles.Delete)),
 ):
     """Delete a user role."""
-    db_user = db.query(User).filter(User.id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    role_to_remove = next((role for role in db_user.roles if role.id == role_id), None)
-    if not role_to_remove:
-        raise HTTPException(status_code=404, detail="Role not found for user")
-    db_user.roles.remove(role_to_remove)
-    db.add(db_user)
-    db.commit()
+    service.remove_user_role(db, user_id, role_id)
     return MessageResponse(message="User role deleted successfully")
 
 
-@users_router.get("/permissions", response_model=list[UserPermissionRead])
+@users_router.get("/permissions", response_model=list[schema.UserPermissionRead])
 async def list_user_permissions(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -99,40 +76,36 @@ async def list_user_permissions(
     current_user: User = Depends(require_permission(UserPermissions.List)),
 ):
     """List permissions for the current user."""
-    query = db.query(UserPermission)
-    results, total = refine_query(query, UserPermission, pagination)
+    results, total = service.list_user_permissions(db, pagination)
     return refine_list_response(response, results, total)
 
 
 @users_router.get(
-    "/permissions/{user_id}", response_model=ApiResponse[UserPermissionRead]
+    "/permissions/{user_id}", response_model=ApiResponse[schema.UserPermissionRead]
 )
 async def get_user_permissions(
     user_id: str,
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(UserPermissions.Show)),
 ):
     """Get permissions for a specific user."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return ApiResponse(data=user.permissions)
+    user_permissions = service.get_user_permissions(db, user_id, pagination)
+    return ApiResponse(data=user_permissions)
 
 
-@users_router.post("/permissions", response_model=ApiResponse[UserPermissionRead])
+@users_router.post(
+    "/permissions", response_model=ApiResponse[schema.UserPermissionRead]
+)
 async def create_user_permission(
-    user_permission: UserPermissionCreate,
+    user_permission: schema.UserPermissionCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(UserPermissions.Create)),
 ):
     """Create a new user permission."""
-    db_user = db.query(User).filter(User.id == user_permission.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    db_user.permissions.append(user_permission)
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    user_permission = service.assign_user_permission(
+        db, user_permission.user_id, user_permission.permission_id
+    )
     return ApiResponse(data=user_permission)
 
 
@@ -146,21 +119,11 @@ async def delete_user_permission(
     current_user: User = Depends(require_permission(UserPermissions.Delete)),
 ):
     """Delete a user permission."""
-    db_user = db.query(User).filter(User.id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    permission_to_remove = next(
-        (perm for perm in db_user.permissions if perm.id == permission_id), None
-    )
-    if not permission_to_remove:
-        raise HTTPException(status_code=404, detail="Permission not found for user")
-    db_user.permissions.remove(permission_to_remove)
-    db.add(db_user)
-    db.commit()
+    service.remove_user_permission(db, user_id, permission_id)
     return MessageResponse(message="User permission deleted successfully")
 
 
-@users_router.get("", response_model=list[UserRead])
+@users_router.get("", response_model=list[schema.UserRead])
 async def list_users(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -168,40 +131,30 @@ async def list_users(
     current_user: User = Depends(require_permission(Users.List)),
 ):
     """List users."""
-    query = db.query(User)
-    users, total = refine_query(query, User, pagination)
+    users, total = service.list_users(db, pagination)
     return refine_list_response(response, users, total)
 
 
-@users_router.get("/{user_id}", response_model=ApiResponse[UserRead])
+@users_router.get("/{user_id}", response_model=ApiResponse[schema.UserRead])
 async def get_user(
     user_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Users.Show)),
 ):
     """Get user by ID."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = service.get_user(db, user_id)
     return ApiResponse(data=user)
 
 
-@users_router.put("/{user_id}", response_model=ApiResponse[UserRead])
+@users_router.put("/{user_id}", response_model=ApiResponse[schema.UserRead])
 async def update_user(
     user_id: str,
-    user_update: UserUpdate,
+    user_update: schema.UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Users.Update)),
 ):
     """Update user details."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    for key, value in user_update.model_dump(exclude_unset=True).items():
-        setattr(user, key, value)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    user = service.update_user(db, user_id, user_update)
     return ApiResponse(data=user)
 
 
@@ -212,9 +165,5 @@ async def delete_user(
     current_user: User = Depends(require_permission(Users.Delete)),
 ):
     """Delete a user."""
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    db.delete(user)
-    db.commit()
+    service.delete_user(db, user_id)
     return MessageResponse(message="User deleted successfully")

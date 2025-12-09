@@ -16,6 +16,7 @@ from app.core.security import (
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role
 from app.features.users.model import User
+from app.features.users.service import get_user_by_email
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
@@ -56,7 +57,8 @@ async def get_current_user(
                 return None
 
             # Lookup user in DB
-            user = db.query(User).filter(User.email == email).first()
+
+            user = get_user_by_email(db, email)
             if not user:
                 return None
 
@@ -86,7 +88,7 @@ async def get_current_user(
         return None
 
     # Lookup user in DB
-    user = db.query(User).filter(User.email == email).first()
+    user = get_user_by_email(db, email)
     if not user:
         return None
 
@@ -127,21 +129,6 @@ def require_permission(permission_name: Permission):
         return current_user
 
     return permission_checker
-
-
-def require_roles(roles: list[str]):
-    """Dependency factory to check if user has any of the specified roles"""
-
-    async def role_checker(current_user: User = Depends(get_current_user)):
-        user_roles = [role.name for role in current_user.roles]
-        if not any(role in user_roles for role in roles):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"One of these roles required: {', '.join(roles)}",
-            )
-        return current_user
-
-    return role_checker
 
 
 def check_permissions_user(user: User, required_permissions: list[str]) -> bool:
