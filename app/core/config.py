@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     SFTP_PASSWORD: str = os.getenv("SFTP_PASSWORD", "")
     SFTP_DIRECTORY: str = os.getenv("SFTP_DIRECTORY", "/uploads")
 
+    GUEST_ROLE_NAME: str = os.getenv("GUEST_ROLE_NAME", "guest")
+    USER_ROLE_NAME: str = os.getenv("USER_ROLE_NAME", "user")
+    ADMIN_ROLE_NAME: str = os.getenv("ADMIN_ROLE_NAME", "admin")
+
     @property
     def emails_enabled(self) -> bool:
         return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)

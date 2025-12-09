@@ -17,6 +17,7 @@ from app.common.permissions import (
     UserRoles,
     Users,
 )
+from app.core.config import settings
 from app.core.db import engine
 from app.core.security import get_password_hash
 from app.features.events.model import Category, EventType
@@ -241,22 +242,28 @@ def create_initial_data():
                 session.add(Permission(name=name))
             session.commit()
 
-        admin_role = session.exec(select(Role).where(Role.name == "admin")).first()
-        user_role = session.exec(select(Role).where(Role.name == "user")).first()
-        guest_role = session.exec(select(Role).where(Role.name == "guest")).first()
+        admin_role = session.exec(
+            select(Role).where(Role.name == settings.ADMIN_ROLE_NAME)
+        ).first()
+        user_role = session.exec(
+            select(Role).where(Role.name == settings.USER_ROLE_NAME)
+        ).first()
+        guest_role = session.exec(
+            select(Role).where(Role.name == settings.GUEST_ROLE_NAME)
+        ).first()
         logger.debug("Checking existing roles in the database")
         if not admin_role or not user_role or not guest_role:
             if not admin_role:
                 logger.info("Seeding admin role")
-                admin_role = Role(name="admin")
+                admin_role = Role(name=settings.ADMIN_ROLE_NAME)
                 session.add(admin_role)
             if not user_role:
                 logger.info("Seeding user role")
-                user_role = Role(name="user")
+                user_role = Role(name=settings.USER_ROLE_NAME)
                 session.add(user_role)
             if not guest_role:
                 logger.info("Seeding guest role")
-                guest_role = Role(name="guest")
+                guest_role = Role(name=settings.GUEST_ROLE_NAME)
                 session.add(guest_role)
             session.commit()
 
