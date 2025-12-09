@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.features.users.model import UserPermission, UserRole
 from app.utils.pagination import PaginationParams
 from app.utils.refine_query import refine_query
@@ -46,9 +47,19 @@ def list_user_permissions(db: Session, permission: UserPermission):
     return refine_query(query, UserPermission, permission)
 
 
-def get_permissions_by_user_id(db: Session, user_id: str, pagination: PaginationParams):
+def list_guest_permissions(db: Session):
+    guest_role = (
+        db.query(UserRole).filter(UserRole.name == settings.GUEST_ROLE_NAME).first()
+    )
+    if not guest_role:
+        return [], 0
+    query = db.query(UserPermission).filter(UserPermission.role_id == guest_role.id)
+    return refine_query(query, UserPermission, PaginationParams(page=1, size=1000))
+
+
+def get_permissions_by_user_id(db: Session, user_id: str):
     query = db.query(UserPermission).filter(UserPermission.user_id == user_id)
-    return refine_query(query, UserPermission, pagination)
+    return query.all()
 
 
 def add_permission_to_user(db: Session, user_id: str, permission_id: str):

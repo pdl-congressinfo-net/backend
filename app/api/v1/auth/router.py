@@ -11,12 +11,8 @@ from app.api.v1.users.schema import (
     UserLogin,
 )
 from app.common.deps import (
-    check_permissions_role,
-    check_permissions_user,
     get_current_user,
     get_db,
-    get_role_permissions,
-    get_user_permissions,
 )
 from app.core.config import settings
 from app.core.mail import send_email
@@ -31,6 +27,7 @@ from app.core.security import (
     verify_password,
 )
 from app.features.users.model import LoginOTP, User
+from app.features.users.service import get_user_permissions, list_guest_permissions
 
 auth_router = APIRouter()
 
@@ -214,25 +211,13 @@ async def magic_login(request: MagicLoginRequest, db: Session = Depends(get_db))
     return response
 
 
-@auth_router.post("/permissions")
-async def get_current_user_permissions(
-    permission: PermissionBase,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    if user:
-        return check_permissions_user(user, [permission.name])
-    else:
-        return check_permissions_role("guest", [permission.name], db)
-
-
 @auth_router.get("/permissions", response_model=list[PermissionBase])
 async def get_all_permissions(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if user:
-        permissions = get_user_permissions(user)
+        permissions = get_user_permissions(user, db, True)
     else:
-        permissions = get_role_permissions("guest", db)
+        permissions = list_guest_permissions(db)
     return [PermissionBase(name=perm) for perm in permissions]

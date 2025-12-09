@@ -16,7 +16,13 @@ from app.core.security import (
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role
 from app.features.users.model import User
-from app.features.users.service import get_user_by_email
+from app.features.users.service import (
+    get_user_by_email,
+    list_guest_permissions,
+)
+from app.features.users.service import (
+    get_user_permissions as service_get_user_permissions,
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
@@ -104,11 +110,10 @@ def require_permission(permission_name: Permission):
     ):
         # If no user is authenticated, check if permission is available to guests
         if current_user is None:
-            guest_role = db.query(Role).filter(Role.name == "guest").first()
-            if guest_role:
-                guest_permissions = [perm.name for perm in guest_role.permissions]
-                if permission_name in guest_permissions:
-                    return None
+            guest_permissions = list_guest_permissions(db)
+            guest_permission_names = [perm.name for perm in guest_permissions]
+            if permission_name not in guest_permission_names:
+                return None
 
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -116,12 +121,10 @@ def require_permission(permission_name: Permission):
             )
 
         # Check authenticated user's permissions
-        user_permissions = [perm.name for perm in current_user.permissions]
-        for role in current_user.roles:
-            for perm in role.permissions:
-                user_permissions.append(perm.name)
+        user_permissions = service_get_user_permissions(db, current_user.id, True)
+        user_permission_names = [perm.name for perm in user_permissions]
 
-        if permission_name not in user_permissions:
+        if permission_name not in user_permission_names:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permission '{permission_name}' required",
@@ -131,33 +134,12 @@ def require_permission(permission_name: Permission):
     return permission_checker
 
 
-def check_permissions_user(user: User, required_permissions: list[str]) -> bool:
-    """Check if user has all required permissions"""
-    user_permissions = [user_permission.name for user_permission in user.permissions]
-    for role in user.roles:
-        for perm in role.permissions:
-            user_permissions.append(perm.name)
-    return all(perm in user_permissions for perm in required_permissions)
-
-
-def get_user_permissions(user: User) -> list[str]:
-    """Get all permissions for a user"""
-    user_permissions = {user_permission.name for user_permission in user.permissions}
-    for role in user.roles:
-        for perm in role.permissions:
-            user_permissions.add(perm.name)
-    return list(user_permissions)
-
-
-def check_permissions_role(
-    role: str, required_permissions: list[str], db: Session
+def check_permissions_user(
+    user: User, required_permissions: list[str], db: Session = Depends(get_db)
 ) -> bool:
-    """Check if role has all required permissions"""
-    role_obj = db.query(Role).filter(Role.name == role).first()
-    if not role_obj:
-        return False
-    role_permissions = [perm.name for perm in role_obj.permissions]
-    return all(perm in role_permissions for perm in required_permissions)
+    """Check if user has all required permissions"""
+    user_permissions = service_get_user_permissions(db, user.id, True)
+    return all(perm in user_permissions for perm in required_permissions)
 
 
 def get_role_permissions(role: str, db: Session) -> list[str]:

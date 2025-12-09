@@ -34,8 +34,17 @@ def list_user_permissions(db, pagination):
     return repo.list_user_permissions(db, pagination)
 
 
-def get_user_permissions(db, user_id: str, pagination):
-    permissions = repo.get_permissions_by_user_id(db, user_id, pagination)
+def list_guest_permissions(db):
+    return repo.list_guest_permissions(db)
+
+
+def get_user_permissions(db, user_id: str, include_roles: bool = False):
+    permissions = repo.get_permissions_by_user_id(db, user_id)
+    if include_roles:
+        roles = repo.get_roles_by_user_id(db, user_id, None)
+        for role in roles:
+            for perm in role.permissions:
+                permissions.append(perm)
     if not permissions:
         raise NotFoundError("User permissions not found")
     return permissions
