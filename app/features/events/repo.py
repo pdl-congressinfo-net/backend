@@ -75,7 +75,7 @@ def delete_event_type(db: Session, event_type: EventType):
 def list_events(db: Session, can_view_all: bool, pagination: PaginationParams):
     query = db.query(Event)
     if not can_view_all:
-        query = query.filter(Event.is_published)
+        query = query.filter(Event.is_public)
     return refine_query(query, Event, pagination)
 
 

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from app.common.exceptions import NotFoundError
+from app.features.roles import repo as role_repo
 from app.features.users import repo
 from app.features.users.model import User
 
@@ -41,8 +42,10 @@ def list_guest_permissions(db):
 def get_user_permissions(db, user_id: str, include_roles: bool = False):
     permissions = repo.get_permissions_by_user_id(db, user_id)
     if include_roles:
-        roles = repo.get_roles_by_user_id(db, user_id, None)
-        for role in roles:
+        roles = repo.get_roles_by_user_id(db, user_id)
+        user_roles = [role_repo.get_role_by_id(db, role.role_id) for role in roles]
+        print(user_roles)
+        for role in user_roles:
             for perm in role.permissions:
                 permissions.append(perm)
     if not permissions:

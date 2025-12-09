@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.features.users.model import UserPermission, UserRole
+from app.features.users.model import User, UserPermission, UserRole
 from app.utils.pagination import PaginationParams
 from app.utils.refine_query import refine_query
 
@@ -14,9 +14,8 @@ def list_user_roles(db: Session, pagination: PaginationParams):
     return refine_query(query, UserRole, pagination)
 
 
-def get_roles_by_user_id(db: Session, user_id: str, pagination: PaginationParams):
-    query = db.query(UserRole).filter(UserRole.user_id == user_id)
-    return refine_query(query, UserRole, pagination)
+def get_roles_by_user_id(db: Session, user_id: str):
+    return db.query(UserRole).filter(UserRole.user_id == user_id).all()
 
 
 def add_role_to_user(db: Session, user_id: str, role_id: str):
@@ -89,26 +88,26 @@ def remove_permission_from_user(db: Session, user_id: str, permission_id: str):
 # USER REPO
 # =========================
 def list_users(db: Session, pagination: PaginationParams):
-    query = db.query(UserRole)
-    return refine_query(query, UserRole, pagination)
+    query = db.query(User)
+    return refine_query(query, User, pagination)
 
 
 def get_user_by_id(db: Session, user_id: str):
-    return db.query(UserRole).filter(UserRole.id == user_id).first()
+    return db.query(User).filter(User.id == user_id).first()
 
 
 def get_user_by_email(db: Session, email: str):
-    return db.query(UserRole).filter(UserRole.email == email).first()
+    return db.query(User).filter(User.email == email).first()
 
 
-def create_user(db: Session, user: UserRole):
+def create_user(db: Session, user: User):
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
 
 
-def update_user(db: Session, user: UserRole, updates: dict):
+def update_user(db: Session, user: User, updates: dict):
     for key, value in updates.items():
         setattr(user, key, value)
     db.commit()
@@ -116,6 +115,6 @@ def update_user(db: Session, user: UserRole, updates: dict):
     return user
 
 
-def delete_user(db: Session, user: UserRole):
+def delete_user(db: Session, user: User):
     db.delete(user)
     db.commit()

@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from datetime import timedelta
 
 from fastapi import Cookie, Depends, HTTPException, Request, Response, status
@@ -27,7 +28,7 @@ from app.features.users.service import (
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
 
-def get_db() -> Session:
+def get_db() -> Generator[Session, None, None]:
     """Database session dependency"""
     with SQLSession(engine) as session:
         yield session
@@ -135,7 +136,7 @@ def require_permission(permission_name: Permission):
 
 
 def check_permissions_user(
-    user: User, required_permissions: list[str], db: Session = Depends(get_db)
+    db: Session, user: User, required_permissions: list[str]
 ) -> bool:
     """Check if user has all required permissions"""
     user_permissions = service_get_user_permissions(db, user.id, True)

@@ -83,7 +83,7 @@ def delete_event_type(db, event_type_id: str):
 # EVENT SERVICE
 # =========================
 def list_events(db, user, pagination):
-    can_view_all = check_permissions_user(user, [Events.ListAll])
+    can_view_all = check_permissions_user(db, user, [Events.ListAll])
     return repo.list_events(db, can_view_all, pagination)
 
 
