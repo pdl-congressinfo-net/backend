@@ -15,7 +15,7 @@ from app.common.deps import (
     get_db,
 )
 from app.core.config import settings
-from app.core.mail import send_email
+from app.integrations.mail.mail import send_email
 from app.core.security import (
     create_access_token,
     create_magic_link,

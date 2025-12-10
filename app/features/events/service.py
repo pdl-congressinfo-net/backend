@@ -1,46 +1,8 @@
 from pydantic import BaseModel
 
-from app.common.deps import check_permissions_user
 from app.common.exceptions import NotFoundError
-from app.common.permissions import Events
 from app.features.events import repo
-from app.features.events.model import Category, Event, EventType
-
-
-# =========================
-# CATEGORY SERVICE
-# =========================
-def list_categories(db, pagination):
-    return repo.list_categories(db, pagination)
-
-
-def get_category(db, category_id: str):
-    category = repo.get_category_by_id(db, category_id)
-    if not category:
-        raise NotFoundError("Event category not found")
-    return category
-
-
-def create_category(db, payload: BaseModel):
-    category = Category.model_validate(payload)
-    return repo.create_category(db, category)
-
-
-def update_category(db, category_id: str, payload: BaseModel):
-    category = repo.get_category_by_id(db, category_id)
-    if not category:
-        raise NotFoundError("Event category not found")
-
-    updates = payload.model_dump(exclude_unset=True)
-    return repo.update_category(db, category, updates)
-
-
-def delete_category(db, category_id: str):
-    category = repo.get_category_by_id(db, category_id)
-    if not category:
-        raise NotFoundError("Event category not found")
-
-    repo.delete_category(db, category)
+from app.features.events.model import Event, EventType
 
 
 # =========================
@@ -57,12 +19,19 @@ def get_event_type(db, event_type_id: str):
     return event_type
 
 
+def get_event_type_by_code(db, code: str):
+    event_type = repo.get_event_type_by_code(db, code)
+    if not event_type:
+        raise NotFoundError("Event type not found")
+    return event_type
+
+
 def create_event_type(db, payload: BaseModel):
     event_type = EventType.model_validate(payload)
     return repo.create_event_type(db, event_type)
 
 
-def update_event_type(db, event_type_id, payload):
+def update_event_type(db, event_type_id: str, payload: BaseModel):
     event_type = repo.get_event_type_by_id(db, event_type_id)
     if not event_type:
         raise NotFoundError("Event type not found")
@@ -75,21 +44,17 @@ def delete_event_type(db, event_type_id: str):
     event_type = repo.get_event_type_by_id(db, event_type_id)
     if not event_type:
         raise NotFoundError("Event type not found")
-
     repo.delete_event_type(db, event_type)
 
 
 # =========================
 # EVENT SERVICE
 # =========================
-def list_events(db, user, pagination):
-    can_view_all = check_permissions_user(db, user, [Events.ListAll])
-    print("##############")
-    print(can_view_all)
-    return repo.list_events(db, can_view_all, pagination)
+def list_events(db, pagination):
+    return repo.list_events(db, pagination)
 
 
-def get_event(db, event_id):
+def get_event(db, event_id: str):
     event = repo.get_event_by_id(db, event_id)
     if not event:
         raise NotFoundError("Event not found")
@@ -101,7 +66,7 @@ def create_event(db, payload: BaseModel):
     return repo.create_event(db, event)
 
 
-def update_event(db, event_id, payload):
+def update_event(db, event_id: str, payload: BaseModel):
     event = repo.get_event_by_id(db, event_id)
     if not event:
         raise NotFoundError("Event not found")
@@ -110,9 +75,26 @@ def update_event(db, event_id, payload):
     return repo.update_event(db, event, updates)
 
 
-def delete_event(db, event_id):
+def delete_event(db, event_id: str):
+    event = repo.get_event_by_id(db, event_id)
+    if not event:
+        raise NotFoundError("Event not found")
+    repo.delete_event(db, event)
+
+
+def publish_event(db, event_id: str):
     event = repo.get_event_by_id(db, event_id)
     if not event:
         raise NotFoundError("Event not found")
 
-    repo.delete_event(db, event)
+    updates = {"is_public": True}
+    return repo.update_event(db, event, updates)
+
+
+def unpublish_event(db, event_id: str):
+    event = repo.get_event_by_id(db, event_id)
+    if not event:
+        raise NotFoundError("Event not found")
+
+    updates = {"is_public": False}
+    return repo.update_event(db, event, updates)

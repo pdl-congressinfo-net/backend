@@ -19,6 +19,13 @@ def get_permission(db, permission_id: str):
     return permission
 
 
+def get_permission_by_name(db, name: str):
+    permission = repo.get_permission_by_name(db, name)
+    if not permission:
+        raise NotFoundError("Permission not found")
+    return permission
+
+
 def create_permission(db, payload: BaseModel):
     permission = Permission.model_validate(payload)
     return repo.create_permission(db, permission)
@@ -37,5 +44,4 @@ def delete_permission(db, permission_id: str):
     permission = repo.get_permission_by_id(db, permission_id)
     if not permission:
         raise NotFoundError("Permission not found")
-
     repo.delete_permission(db, permission)

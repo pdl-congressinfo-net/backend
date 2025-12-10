@@ -14,7 +14,6 @@ class LocationType(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     name: str = Field(unique=True, index=True)
-    description: str | None = None  # noqa: UP007
 
     locations: list["Location"] = Relationship(back_populates="location_type")
 

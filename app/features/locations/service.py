@@ -1,260 +1,138 @@
-"""Service layer for Location business logic."""
+from pydantic import BaseModel
 
-from sqlmodel import Session
-
-from app.utils.pagination import PaginationParams
-from app.features.countries.repo import CountryRepository
-from app.features.location_types.repo import LocationTypeRepository
-from app.features.locations.model import Location
-from app.features.locations.repo import LocationRepository
+from app.common.exceptions import NotFoundError
+from app.features.locations import repo
+from app.features.locations.model import Country, Location, LocationType
 
 
-class LocationService:
-    """Service for Location business logic operations."""
+# =========================
+# LOCATION TYPE SERVICE
+# =========================
+def list_location_types(db, pagination):
+    return repo.list_location_types(db, pagination)
 
-    def __init__(self, db: Session):
-        """Initialize service with database session.
 
-        Args:
-            db: SQLModel database session
-        """
-        self.repo = LocationRepository(db)
-        self.country_repo = CountryRepository(db)
-        self.location_type_repo = LocationTypeRepository(db)
+def get_location_type(db, location_type_id: str):
+    location_type = repo.get_location_type_by_id(db, location_type_id)
+    if not location_type:
+        raise NotFoundError("Location type not found")
+    return location_type
 
-    def get_by_id(self, location_id: str) -> Location | None:
-        """Retrieve a location by its ID.
 
-        Args:
-            location_id: The UUID of the location
+def get_location_type_by_name(db, name: str):
+    location_type = repo.get_location_type_by_name(db, name)
+    if not location_type:
+        raise NotFoundError("Location type not found")
+    return location_type
 
-        Returns:
-            Location if found, None otherwise
-        """
-        return self.repo.get_by_id(location_id)
 
-    def get_by_name(self, name: str) -> Location | None:
-        """Retrieve a location by its name.
+def create_location_type(db, payload: BaseModel):
+    location_type = LocationType.model_validate(payload)
+    return repo.create_location_type(db, location_type)
 
-        Args:
-            name: The name of the location
 
-        Returns:
-            Location if found, None otherwise
-        """
-        return self.repo.get_by_name(name)
+def update_location_type(db, location_type_id: str, payload: BaseModel):
+    location_type = repo.get_location_type_by_id(db, location_type_id)
+    if not location_type:
+        raise NotFoundError("Location type not found")
 
-    def list(self, pagination: PaginationParams) -> list[Location]:
-        """List all locations with pagination.
+    updates = payload.model_dump(exclude_unset=True)
+    return repo.update_location_type(db, location_type, updates)
 
-        Args:
-            pagination: Pagination parameters for the query
 
-        Returns:
-            List of Location objects
-        """
-        return self.repo.list(pagination)
+def delete_location_type(db, location_type_id: str):
+    location_type = repo.get_location_type_by_id(db, location_type_id)
+    if not location_type:
+        raise NotFoundError("Location type not found")
+    repo.delete_location_type(db, location_type)
 
-    def list_by_country(
-        self, country_id: str, pagination: PaginationParams
-    ) -> list[Location]:
-        """List all locations in a specific country.
 
-        Args:
-            country_id: The UUID of the country
-            pagination: Pagination parameters
+# =========================
+# COUNTRY SERVICE
+# =========================
+def list_countries(db, pagination):
+    return repo.list_countries(db, pagination)
 
-        Returns:
-            List of Location objects
-        """
-        return self.repo.list_by_country(country_id, pagination)
 
-    def list_by_location_type(
-        self, location_type_id: str, pagination: PaginationParams
-    ) -> list[Location]:
-        """List all locations of a specific type.
+def get_country(db, country_id: str):
+    country = repo.get_country_by_id(db, country_id)
+    if not country:
+        raise NotFoundError("Country not found")
+    return country
 
-        Args:
-            location_type_id: The UUID of the location type
-            pagination: Pagination parameters
 
-        Returns:
-            List of Location objects
-        """
-        return self.repo.list_by_location_type(location_type_id, pagination)
+def get_country_by_code2(db, code2: str):
+    country = repo.get_country_by_code2(db, code2)
+    if not country:
+        raise NotFoundError("Country not found")
+    return country
 
-    def list_by_city(self, city: str, pagination: PaginationParams) -> list[Location]:
-        """List all locations in a specific city.
 
-        Args:
-            city: The city name
-            pagination: Pagination parameters
+def get_country_by_code3(db, code3: str):
+    country = repo.get_country_by_code3(db, code3)
+    if not country:
+        raise NotFoundError("Country not found")
+    return country
 
-        Returns:
-            List of Location objects
-        """
-        return self.repo.list_by_city(city, pagination)
 
-    def create(self, location_data: dict) -> Location:
-        """Create a new location with validation.
+def create_country(db, payload: BaseModel):
+    country = Country.model_validate(payload)
+    return repo.create_country(db, country)
 
-        Args:
-            location_data: Dictionary containing location data
 
-        Returns:
-            The created Location
+def update_country(db, country_id: str, payload: BaseModel):
+    country = repo.get_country_by_id(db, country_id)
+    if not country:
+        raise NotFoundError("Country not found")
 
-        Raises:
-            ValueError: If validation fails or referenced entities don't exist
-        """
-        # Check for duplicate name
-        existing = self.repo.get_by_name(location_data.get("name", ""))
-        if existing:
-            raise ValueError(f"Location with name '{location_data['name']}' already exists")
+    updates = payload.model_dump(exclude_unset=True)
+    return repo.update_country(db, country, updates)
 
-        # Validate country exists
-        country_id = location_data.get("country_id")
-        if country_id:
-            country = self.country_repo.get_by_id(country_id)
-            if not country:
-                raise ValueError(f"Country with ID '{country_id}' not found")
-        else:
-            raise ValueError("country_id is required")
 
-        # Validate location type exists
-        location_type_id = location_data.get("location_type_id")
-        if location_type_id:
-            location_type = self.location_type_repo.get_by_id(location_type_id)
-            if not location_type:
-                raise ValueError(f"Location type with ID '{location_type_id}' not found")
-        else:
-            raise ValueError("location_type_id is required")
+def delete_country(db, country_id: str):
+    country = repo.get_country_by_id(db, country_id)
+    if not country:
+        raise NotFoundError("Country not found")
+    repo.delete_country(db, country)
 
-        # Validate coordinates if provided
-        latitude = location_data.get("latitude")
-        longitude = location_data.get("longitude")
-        if latitude is not None:
-            if not -90 <= latitude <= 90:
-                raise ValueError("Latitude must be between -90 and 90 degrees")
-        if longitude is not None:
-            if not -180 <= longitude <= 180:
-                raise ValueError("Longitude must be between -180 and 180 degrees")
 
-        location = Location(**location_data)
-        return self.repo.create(location)
+# =========================
+# LOCATION SERVICE
+# =========================
+def list_locations(db, pagination):
+    return repo.list_locations(db, pagination)
 
-    def update(self, location_id: str, location_data: dict) -> Location:
-        """Update an existing location with validation.
 
-        Args:
-            location_id: The UUID of the location to update
-            location_data: Dictionary containing updated location data
+def get_location(db, location_id: str):
+    location = repo.get_location_by_id(db, location_id)
+    if not location:
+        raise NotFoundError("Location not found")
+    return location
 
-        Returns:
-            The updated Location
 
-        Raises:
-            ValueError: If location not found or validation fails
-        """
-        location = self.repo.get_by_id(location_id)
-        if not location:
-            raise ValueError(f"Location with ID '{location_id}' not found")
+def get_location_by_name(db, name: str):
+    location = repo.get_location_by_name(db, name)
+    if not location:
+        raise NotFoundError("Location not found")
+    return location
 
-        # Check for duplicate name if name is being changed
-        if "name" in location_data and location_data["name"] != location.name:
-            existing = self.repo.get_by_name(location_data["name"])
-            if existing:
-                raise ValueError(f"Location with name '{location_data['name']}' already exists")
 
-        # Validate country exists if being changed
-        if "country_id" in location_data and location_data["country_id"] != location.country_id:
-            country = self.country_repo.get_by_id(location_data["country_id"])
-            if not country:
-                raise ValueError(f"Country with ID '{location_data['country_id']}' not found")
+def create_location(db, payload: BaseModel):
+    location = Location.model_validate(payload)
+    return repo.create_location(db, location)
 
-        # Validate location type exists if being changed
-        if "location_type_id" in location_data and location_data["location_type_id"] != location.location_type_id:
-            location_type = self.location_type_repo.get_by_id(location_data["location_type_id"])
-            if not location_type:
-                raise ValueError(f"Location type with ID '{location_data['location_type_id']}' not found")
 
-        # Validate coordinates if provided
-        if "latitude" in location_data and location_data["latitude"] is not None:
-            if not -90 <= location_data["latitude"] <= 90:
-                raise ValueError("Latitude must be between -90 and 90 degrees")
-        if "longitude" in location_data and location_data["longitude"] is not None:
-            if not -180 <= location_data["longitude"] <= 180:
-                raise ValueError("Longitude must be between -180 and 180 degrees")
+def update_location(db, location_id: str, payload: BaseModel):
+    location = repo.get_location_by_id(db, location_id)
+    if not location:
+        raise NotFoundError("Location not found")
 
-        # Update fields
-        for key, value in location_data.items():
-            if hasattr(location, key):
-                setattr(location, key, value)
+    updates = payload.model_dump(exclude_unset=True)
+    return repo.update_location(db, location, updates)
 
-        return self.repo.update(location)
 
-    def delete(self, location_id: str) -> bool:
-        """Delete a location by ID.
-
-        Args:
-            location_id: The UUID of the location to delete
-
-        Returns:
-            True if deleted successfully
-
-        Raises:
-            ValueError: If location not found or has associated events
-        """
-        location = self.repo.get_by_id(location_id)
-        if not location:
-            raise ValueError(f"Location with ID '{location_id}' not found")
-
-        # Check if location has associated events
-        if location.events:
-            raise ValueError(
-                f"Cannot delete location '{location.name}' as it has {len(location.events)} associated events"
-            )
-
-        return self.repo.delete(location_id)
-
-    def search(self, query: str, pagination: PaginationParams) -> list[Location]:
-        """Search locations by name, city, or address fields.
-
-        Args:
-            query: Search string to match against various location fields
-            pagination: Pagination parameters
-
-        Returns:
-            List of matching Location objects
-        """
-        return self.repo.search(query, pagination)
-
-    def find_nearby(
-        self,
-        latitude: float,
-        longitude: float,
-        radius_km: float,
-        pagination: PaginationParams
-    ) -> list[Location]:
-        """Find locations within a certain radius of given coordinates.
-
-        Args:
-            latitude: Latitude coordinate
-            longitude: Longitude coordinate
-            radius_km: Search radius in kilometers
-            pagination: Pagination parameters
-
-        Returns:
-            List of Location objects within the radius
-
-        Raises:
-            ValueError: If coordinates are invalid
-        """
-        if not -90 <= latitude <= 90:
-            raise ValueError("Latitude must be between -90 and 90 degrees")
-        if not -180 <= longitude <= 180:
-            raise ValueError("Longitude must be between -180 and 180 degrees")
-        if radius_km <= 0:
-            raise ValueError("Radius must be greater than 0")
-
-        return self.repo.find_nearby(latitude, longitude, radius_km, pagination)
+def delete_location(db, location_id: str):
+    location = repo.get_location_by_id(db, location_id)
+    if not location:
+        raise NotFoundError("Location not found")
+    repo.delete_location(db, location)

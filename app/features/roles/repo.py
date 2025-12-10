@@ -6,41 +6,6 @@ from app.utils.refine_query import refine_query
 
 
 # =========================
-# ROLE PERMISSION REPO
-# =========================
-def list_role_permissions(db: Session, pagination: PaginationParams):
-    query = db.query(RolePermission)
-    return refine_query(query, RolePermission, pagination)
-
-
-def get_role_permission(db: Session, role_id: str, permission_id: str):
-    return (
-        db.query(RolePermission)
-        .filter(
-            RolePermission.role_id == role_id,
-            RolePermission.permission_id == permission_id,
-        )
-        .first()
-    )
-
-
-def get_permissions_by_role(db: Session, role_id: str):
-    return db.query(RolePermission).filter(RolePermission.role_id == role_id).all()
-
-
-def create_role_permission(db: Session, role_permission: RolePermission):
-    db.add(role_permission)
-    db.commit()
-    db.refresh(role_permission)
-    return role_permission
-
-
-def delete_role_permission(db: Session, role_permission: RolePermission):
-    db.delete(role_permission)
-    db.commit()
-
-
-# =========================
 # ROLE REPO
 # =========================
 def list_roles(db: Session, pagination: PaginationParams):
@@ -52,8 +17,8 @@ def get_role_by_id(db: Session, role_id: str):
     return db.query(Role).filter(Role.id == role_id).first()
 
 
-def get_role_by_name(db: Session, role_name: str):
-    return db.query(Role).filter(Role.name == role_name).first()
+def get_role_by_name(db: Session, name: str):
+    return db.query(Role).filter(Role.name == name).first()
 
 
 def create_role(db: Session, role: Role):
@@ -74,3 +39,37 @@ def update_role(db: Session, role: Role, updates: dict):
 def delete_role(db: Session, role: Role):
     db.delete(role)
     db.commit()
+
+
+# =========================
+# ROLE PERMISSION REPO
+# =========================
+def list_role_permissions(db: Session, pagination: PaginationParams):
+    query = db.query(RolePermission)
+    return refine_query(query, RolePermission, pagination)
+
+
+def get_permissions_by_role_id(db: Session, role_id: str):
+    role = db.query(Role).filter(Role.id == role_id).first()
+    return role.permissions if role else []
+
+
+def add_permission_to_role(db: Session, role_id: str, permission_id: str):
+    role_permission = RolePermission(role_id=role_id, permission_id=permission_id)
+    db.add(role_permission)
+    db.commit()
+    return role_permission
+
+
+def remove_permission_from_role(db: Session, role_id: str, permission_id: str):
+    role_permission = (
+        db.query(RolePermission)
+        .filter(
+            RolePermission.role_id == role_id,
+            RolePermission.permission_id == permission_id,
+        )
+        .first()
+    )
+    if role_permission:
+        db.delete(role_permission)
+        db.commit()
