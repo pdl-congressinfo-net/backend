@@ -1,9 +1,5 @@
 import os
 
-import dotenv
-
-dotenv.load_dotenv()
-
 from pydantic_settings import BaseSettings
 
 
@@ -18,6 +14,7 @@ class Settings(BaseSettings):
         for origin in os.getenv("BACKEND_CORS_ORIGINS", "").split(",")
         if origin.strip()
     ]
+    print(all_cors_origins)
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
@@ -50,6 +47,8 @@ class Settings(BaseSettings):
     GUEST_ROLE_NAME: str = os.getenv("GUEST_ROLE_NAME", "guest")
     USER_ROLE_NAME: str = os.getenv("USER_ROLE_NAME", "user")
     ADMIN_ROLE_NAME: str = os.getenv("ADMIN_ROLE_NAME", "admin")
+
+    PROJECT_VERSION: str = os.getenv("PROJECT_VERSION", "0.1.0")
 
     @property
     def emails_enabled(self) -> bool:

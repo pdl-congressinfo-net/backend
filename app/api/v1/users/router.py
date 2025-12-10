@@ -146,7 +146,7 @@ async def get_user(
     return ApiResponse(data=user)
 
 
-@users_router.put("/{user_id}", response_model=ApiResponse[schema.UserRead])
+@users_router.patch("/{user_id}", response_model=ApiResponse[schema.UserRead])
 async def update_user(
     user_id: str,
     user_update: schema.UserUpdate,
