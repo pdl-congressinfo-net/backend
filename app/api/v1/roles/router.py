@@ -16,7 +16,7 @@ roles_router = APIRouter()
 # =========================
 # ROLE ENDPOINTS
 # =========================
-@roles_router.get("/", response_model=list[schema.RoleRead])
+@roles_router.get("", response_model=list[schema.RoleRead])
 async def list_roles(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -39,7 +39,7 @@ async def get_role(
     return ApiResponse(data=role)
 
 
-@roles_router.post("/", response_model=ApiResponse[schema.RoleRead])
+@roles_router.post("", response_model=ApiResponse[schema.RoleRead])
 async def create_role(
     role: schema.RoleCreate,
     db: Session = Depends(get_db),

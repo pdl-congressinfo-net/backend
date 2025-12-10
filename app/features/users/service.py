@@ -35,8 +35,8 @@ def list_user_permissions(db, pagination):
     return repo.list_user_permissions(db, pagination)
 
 
-def list_guest_permissions(db):
-    return repo.list_guest_permissions(db)
+def list_guest_permissions(db, request):
+    return repo.list_guest_permissions(db, request)
 
 
 def get_user_permissions(db, user_id: str, include_roles: bool = False):

@@ -16,7 +16,7 @@ permissions_router = APIRouter()
 # =========================
 # PERMISSION ENDPOINTS
 # =========================
-@permissions_router.get("/", response_model=list[schema.PermissionRead])
+@permissions_router.get("", response_model=list[schema.PermissionRead])
 async def list_permissions(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -39,7 +39,7 @@ async def get_permission(
     return ApiResponse(data=permission)
 
 
-@permissions_router.post("/", response_model=ApiResponse[schema.PermissionRead])
+@permissions_router.post("", response_model=ApiResponse[schema.PermissionRead])
 async def create_permission(
     permission: schema.PermissionCreate,
     db: Session = Depends(get_db),

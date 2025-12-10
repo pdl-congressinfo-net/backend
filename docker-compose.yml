@@ -14,7 +14,7 @@ services:
       prestart:
         condition: service_completed_successfully
     ports:
-      - "8088:8000"
+      - "8008:8000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]

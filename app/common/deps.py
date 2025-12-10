@@ -106,14 +106,19 @@ def require_permission(permission_name: Permission):
     """Dependency factory to check if user has specific permission or if available to guests"""
 
     async def permission_checker(
+        request: Request,
         current_user: User | None = Depends(get_current_user),
         db: Session = Depends(get_db),
     ):
+        if request.method == "OPTIONS":
+            return None
         # If no user is authenticated, check if permission is available to guests
         if current_user is None:
-            guest_permissions = list_guest_permissions(db)
+            guest_permissions, total = list_guest_permissions(db, request)
+            print(guest_permissions)
+            print(permission_name)
             guest_permission_names = [perm.name for perm in guest_permissions]
-            if permission_name not in guest_permission_names:
+            if permission_name in guest_permission_names:
                 return None
 
             raise HTTPException(

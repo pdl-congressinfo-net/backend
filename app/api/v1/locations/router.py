@@ -136,7 +136,7 @@ async def delete_country(
 # =========================
 # LOCATION ENDPOINTS
 # =========================
-@locations_router.get("/", response_model=list[schema.LocationRead])
+@locations_router.get("", response_model=list[schema.LocationRead])
 async def list_locations(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -159,7 +159,7 @@ async def get_location(
     return ApiResponse(data=location)
 
 
-@locations_router.post("/", response_model=ApiResponse[schema.LocationRead])
+@locations_router.post("", response_model=ApiResponse[schema.LocationRead])
 async def create_location(
     location: schema.LocationCreate,
     db: Session = Depends(get_db),

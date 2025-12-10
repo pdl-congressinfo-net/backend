@@ -213,11 +213,12 @@ async def magic_login(request: MagicLoginRequest, db: Session = Depends(get_db))
 
 @auth_router.get("/permissions", response_model=list[PermissionBase])
 async def get_all_permissions(
+    request: Request,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if user:
         permissions = get_user_permissions(db, user.id, True)
     else:
-        permissions = list_guest_permissions(db)
+        permissions, total = list_guest_permissions(db, request)
     return [PermissionBase(name=perm.name) for perm in permissions]

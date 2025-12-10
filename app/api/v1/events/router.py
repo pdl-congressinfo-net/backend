@@ -76,9 +76,9 @@ async def delete_event_type(
 # =========================
 # EVENT ENDPOINTS
 # =========================
-@events_router.get("/", response_model=list[schema.EventRead])
+@events_router.get("", response_model=list[schema.EventRead])
 async def list_events(
-    response: Response,
+    response: Response, 
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.List)),
@@ -99,7 +99,7 @@ async def get_event(
     return ApiResponse(data=event)
 
 
-@events_router.post("/", response_model=ApiResponse[schema.EventRead])
+@events_router.post("", response_model=ApiResponse[schema.EventRead])
 async def create_event(
     event: schema.EventCreate,
     db: Session = Depends(get_db),
