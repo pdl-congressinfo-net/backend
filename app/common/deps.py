@@ -1,4 +1,7 @@
-from fastapi import Cookie, Depends, HTTPException, Request, status
+from collections.abc import Generator
+from datetime import timedelta
+
+from fastapi import Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -6,14 +9,26 @@ from sqlmodel import Session as SQLSession
 
 from app.core.config import settings
 from app.core.db import engine
+from app.core.security import (
+    create_access_token,
+    set_refresh_cookie,
+    set_split_jwt_cookies,
+)
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role
 from app.features.users.model import User
+from app.features.users.service import (
+    get_user_by_email,
+    list_guest_permissions,
+)
+from app.features.users.service import (
+    get_user_permissions as service_get_user_permissions,
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
 
-def get_db() -> Session:
+def get_db() -> Generator[Session, None, None]:
     """Database session dependency"""
     with SQLSession(engine) as session:
         yield session
@@ -21,8 +36,10 @@ def get_db() -> Session:
 
 async def get_current_user(
     request: Request,
+    response: Response,
     jwt_hp: str = Cookie(None),
     jwt_sig: str = Cookie(None),
+    refresh_token: str = Cookie(None),
     db: Session = Depends(get_db),
 ) -> User | None:
     """Optionally authenticate the user using split JWT cookies.
@@ -30,6 +47,37 @@ async def get_current_user(
     """
 
     if not jwt_hp or not jwt_sig:
+        # Handle refresh token flow
+        if refresh_token:
+            try:
+                payload = jwt.decode(
+                    refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+                )
+            except JWTError:
+                return None
+            if not payload:
+                raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+            email = payload["sub"]
+
+            if not email:
+                return None
+
+            # Lookup user in DB
+
+            user = get_user_by_email(db, email)
+            if not user:
+                return None
+
+            access_expires = timedelta(minutes=15)
+            refresh_expires = timedelta(days=7)
+
+            access_token = create_access_token({"sub": email}, access_expires)
+            refresh_token = create_access_token({"sub": email}, refresh_expires)
+
+            set_refresh_cookie(response, refresh_token)
+            set_split_jwt_cookies(response, access_token)
+            return user
         return None
 
     # Reconstruct JWT from split cookies
@@ -47,7 +95,7 @@ async def get_current_user(
         return None
 
     # Lookup user in DB
-    user = db.query(User).filter(User.email == email).first()
+    user = get_user_by_email(db, email)
     if not user:
         return None
 
@@ -63,11 +111,10 @@ def require_permission(permission_name: Permission):
     ):
         # If no user is authenticated, check if permission is available to guests
         if current_user is None:
-            guest_role = db.query(Role).filter(Role.name == "guest").first()
-            if guest_role:
-                guest_permissions = [perm.name for perm in guest_role.permissions]
-                if permission_name in guest_permissions:
-                    return None
+            guest_permissions = list_guest_permissions(db)
+            guest_permission_names = [perm.name for perm in guest_permissions]
+            if permission_name not in guest_permission_names:
+                return None
 
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -75,12 +122,10 @@ def require_permission(permission_name: Permission):
             )
 
         # Check authenticated user's permissions
-        user_permissions = [perm.name for perm in current_user.permissions]
-        for role in current_user.roles:
-            for perm in role.permissions:
-                user_permissions.append(perm.name)
+        user_permissions = service_get_user_permissions(db, current_user.id, True)
+        user_permission_names = [perm.name for perm in user_permissions]
 
-        if permission_name not in user_permissions:
+        if permission_name not in user_permission_names:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permission '{permission_name}' required",
@@ -90,36 +135,19 @@ def require_permission(permission_name: Permission):
     return permission_checker
 
 
-def require_roles(roles: list[str]):
-    """Dependency factory to check if user has any of the specified roles"""
-
-    async def role_checker(current_user: User = Depends(get_current_user)):
-        user_roles = [role.name for role in current_user.roles]
-        if not any(role in user_roles for role in roles):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"One of these roles required: {', '.join(roles)}",
-            )
-        return current_user
-
-    return role_checker
-
-
-def check_permissions_user(user: User, required_permissions: list[str]) -> bool:
-    """Check if user has all required permissions"""
-    user_permissions = [user_permission.name for user_permission in user.permissions]
-    for role in user.roles:
-        for perm in role.permissions:
-            user_permissions.append(perm.name)
-    return all(perm in user_permissions for perm in required_permissions)
-
-
-def check_permissions_role(
-    role: str, required_permissions: list[str], db: Session
+def check_permissions_user(
+    db: Session, user: User, required_permissions: list[str]
 ) -> bool:
-    """Check if role has all required permissions"""
+    """Check if user has all required permissions"""
+    user_permissions = service_get_user_permissions(db, user.id, True)
+    user_permission_names = [perm.name for perm in user_permissions]
+    return all(perm in user_permission_names for perm in required_permissions)
+
+
+def get_role_permissions(role: str, db: Session) -> list[str]:
+    """Get all permissions for a role"""
     role_obj = db.query(Role).filter(Role.name == role).first()
     if not role_obj:
-        return False
+        return []
     role_permissions = [perm.name for perm in role_obj.permissions]
-    return all(perm in role_permissions for perm in required_permissions)
+    return role_permissions

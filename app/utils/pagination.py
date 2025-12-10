@@ -16,7 +16,8 @@ class PaginationParams:
         self.sort = _sort
         self.order = _order
 
-        self.filters = dict(request.query_params)
+        self.filters = request.query_params.multi_items()
+        self.filters = dict(self.filters)
 
         for key in ["_start", "_end", "_sort", "_order"]:
             self.filters.pop(key, None)

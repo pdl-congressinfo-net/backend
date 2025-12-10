@@ -1,4 +1,14 @@
 services:
+  prestart:
+    volumes:
+      - ./app:/app/app
+      - ./scripts:/app/scripts
+      - ./prestart:/app/prestart
+      - ./alembic.ini:/app/alembic.ini
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
+      - ./.env:/app/.env
+
   app:
     volumes:
       - ./app:/app/app
@@ -13,3 +23,11 @@ services:
       prestart:
         condition: service_completed_successfully
     restart: no
+    networks:
+      - proxy-manager_default
+
+
+networks:
+  proxy-manager_default:
+    external: true
+    name: proxy-manager_default

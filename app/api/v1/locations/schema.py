@@ -1,9 +1,13 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
+# =========================
+# LOCATION TYPE SCHEMAS
+# =========================
 class LocationTypeBase(BaseModel):
     name: str
-    description: str | None = None
 
 
 class LocationTypeCreate(LocationTypeBase):
@@ -12,14 +16,24 @@ class LocationTypeCreate(LocationTypeBase):
 
 class LocationTypeUpdate(BaseModel):
     name: str | None = None
-    description: str | None = None
 
 
+class LocationTypeRead(LocationTypeBase):
+    id: str
+
+    class Config:
+        from_attributes = True
+
+
+# =========================
+# COUNTRY SCHEMAS
+# =========================
 class CountryBase(BaseModel):
     name: str
     code2: str
     code3: str
-    devco: bool | None = False
+    devco: bool = False
+    preferred: bool = False
 
 
 class CountryCreate(CountryBase):
@@ -31,28 +45,31 @@ class CountryUpdate(BaseModel):
     code2: str | None = None
     code3: str | None = None
     devco: bool | None = None
+    preferred: bool | None = None
 
 
 class CountryRead(CountryBase):
     id: str
-    name: str
-    code2: str
-    code3: str
-    devco: bool | None = False
+
+    class Config:
+        from_attributes = True
 
 
-class LocationTypeRead(LocationTypeBase):
-    id: str
-
-
+# =========================
+# LOCATION SCHEMAS
+# =========================
 class LocationBase(BaseModel):
     name: str
-    address: str | None = None
-    city: str | None = None
-    state: str | None = None
-    postal_code: str | None = None
-    country_id: str | None = None
-    location_type_id: str | None = None
+    road: Optional[str] = None
+    number: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    link: Optional[str] = None
+    country_id: Optional[str] = None
+    location_type_id: Optional[str] = None
 
 
 class LocationCreate(LocationBase):
@@ -61,20 +78,20 @@ class LocationCreate(LocationBase):
 
 class LocationUpdate(BaseModel):
     name: str | None = None
-    address: str | None = None
+    road: str | None = None
+    number: str | None = None
     city: str | None = None
     state: str | None = None
     postal_code: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    link: str | None = None
     country_id: str | None = None
     location_type_id: str | None = None
 
 
 class LocationRead(LocationBase):
     id: str
-    name: str
-    address: str | None = None
-    city: str | None = None
-    state: str | None = None
-    postal_code: str | None = None
-    country_id: str | None = None
-    location_type_id: str | None = None
+
+    class Config:
+        from_attributes = True

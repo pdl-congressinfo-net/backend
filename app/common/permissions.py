@@ -44,13 +44,7 @@ class Countries(Permission, resource="countries"):
     pass
 
 
-class Events(Permission, resource="events"):
-    @classproperty
-    def Login(cls) -> str:
-        return cls._get_permission("login")
-
-
-class EventTypes(Permission, resource="eventtypes"):
+class LocationTypes(Permission, resource="locationtypes"):
     pass
 
 
@@ -58,7 +52,21 @@ class Locations(Permission, resource="locations"):
     pass
 
 
-class LocationTypes(Permission, resource="locationtypes"):
+class Events(Permission, resource="events"):
+    @classproperty
+    def Participate(cls) -> str:
+        return cls._get_permission("participate")
+
+    @classproperty
+    def ListAll(cls) -> str:
+        return cls._get_permission("listall")
+
+    @classproperty
+    def Publish(cls) -> str:
+        return cls._get_permission("publish")
+
+
+class EventTypes(Permission, resource="eventtypes"):
     pass
 
 
@@ -79,6 +87,10 @@ class Users(Permission, resource="users"):
     def ChangePassword(cls) -> str:
         return cls._get_permission("changepassword")
 
+    @classproperty
+    def ShowMe(cls) -> str:
+        return cls._get_permission("showme")
+
 
 class UserPermissions(Permission, resource="userpermissions"):
     pass
@@ -90,3 +102,13 @@ class UserRoles(Permission, resource="userroles"):
 
 class Categories(Permission, resource="categories"):
     pass
+
+
+class Files(Permission, resource="files"):
+    @classproperty
+    def Upload(cls) -> str:
+        return cls._get_permission("upload")
+
+    @classproperty
+    def Download(cls) -> str:
+        return cls._get_permission("download")

@@ -1,0 +1,125 @@
+erDiagram
+	users ||--o{user_permissions : user_id
+	users ||--o{user_roles : user_id
+	users ||--o{event_users : user_id
+	users {
+		uuid id PK
+		string email
+		string full_name
+		string hashed_password
+		datetime created_at
+		datetime last_login
+	}
+	user_permissions {
+		uuid user_id FK
+		uuid permission_id FK
+	}
+	user_roles {
+		uuid user_id FK
+		uuid role_id FK
+	}
+	roles ||--o{role_permissions : role_id
+	roles ||--o{user_roles : role_id
+	roles {
+		uuid id PK
+		string name
+	}
+	role_permissions {
+		uuid role_id FK
+		uuid permission_id FK
+	}
+	permissions ||--o{role_permissions : permission_id
+	permissions ||--o{user_permissions : permission_id
+	permissions {
+		uuid id PK
+		string name
+	}
+	events || -- o{ event_types : event_type_id
+	events || -- o{ categories : category_id
+	events || -- o{ locations : location_id
+	events ||--o{event_users : event_id
+    events {
+		uuid id PK
+		string name
+		date start_date
+		date end_date
+		bool is_public
+		string location_id FK
+		string category_id FK
+		string event_type_id FK
+    }
+	event_user_types {
+		uuid id PK
+		string code
+		string name_de
+		string name_en
+	}
+	event_users ||--o{event_user_types : event_user_type_id
+    event_users {
+	    uuid event_id FK
+	    uuid user_id FK
+		uuid event_user_type_id FK
+    }
+    event_types {
+	    uuid id PK
+	    string code
+	    string name_de
+	    string name_en
+	    description_de
+	    description_en
+    }
+    categories {
+	    uuid id PK
+	    string code
+	    string name_de
+	    string name_en
+    }
+    locations || -- o{ countries : country_id
+    locations || -- o{ location_types: location_type_id 
+    locations {
+	    uuid id PK
+	    string name
+	    string road
+	    string number
+	    string city
+	    string postal_code
+	    float latitude
+	    float longitude
+	    string link
+	    uuid country_id FK
+	    uuid location_type_id FK
+    }
+    location_types {
+	    uuid id PK
+	    string name
+	    string description
+    }
+    countries {
+	    uuid id PK
+	    string name
+	    string code2
+	    string code3
+	    bool devco
+	    bool preferred
+    }
+    files ||--o{users : user_id
+	files ||--o{events : relation_id
+	files ||--o{file_types : file_type_id
+    files {
+	    uuid id
+	    string name
+	    integer size
+	    datetime created_at
+	    datetime updated_at
+	    uuid user_id FK
+		uuid relation_id FK
+		uuid file_type_id FK
+	    string location
+	    bool external
+	}
+	
+	file_types {
+		uuid id PK
+		string name
+		string description
+	}

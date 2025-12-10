@@ -17,8 +17,10 @@ from app.common.permissions import (
     UserRoles,
     Users,
 )
+from app.core.config import settings
 from app.core.db import engine
 from app.core.security import get_password_hash
+from app.features.events.model import Category, EventType
 from app.features.locations.model import Country
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role, RolePermission
@@ -34,7 +36,7 @@ def load_country_data():
     """Load initial country data into the database."""
 
     logger.info("Loading initial country data")
-    with open("app/prestart/countries.csv", encoding="utf-8") as csvfile:
+    with open("app/prestart/data/countries.csv", encoding="utf-8") as csvfile:
         country_reader = csv.DictReader(csvfile)
         with Session(engine) as session:
             # Check if countries already exist
@@ -54,13 +56,116 @@ def load_country_data():
                 session.add(country)
             session.commit()
     logger.info("Country data loaded successfully")
+    return
+
+
+def load_category_data():
+    """Load initial category data into the database."""
+    logger.info("Loading initial category data")
+    categories = [
+        {"code": "MED", "name_de": "Medizin", "name_en": "Medicine"},
+        {"code": "ENG", "name_de": "Technik", "name_en": "Engineering / Technology"},
+        {"code": "ECO", "name_de": "Wirtschaft", "name_en": "Economics / Business"},
+        {
+            "code": "NAT",
+            "name_de": "Naturwissenschaften",
+            "name_en": "Natural Sciences",
+        },
+        {"code": "TOU", "name_de": "Tourismus", "name_en": "Tourism"},
+        {"code": "LAW", "name_de": "Recht", "name_en": "Law"},
+        {"code": "HUM", "name_de": "Geisteswissenschaften", "name_en": "Humanities"},
+        {
+            "code": "SOC",
+            "name_de": "Sozialwissenschaften",
+            "name_en": "Social Sciences",
+        },
+        {"code": "TRA", "name_de": "Verkehr", "name_en": "Transport / Traffic"},
+        {"code": "OTH", "name_de": "Andere", "name_en": "Other"},
+        {
+            "code": "SEL",
+            "name_de": "--- bitte auswählen ---",
+            "name_en": "--- please select ---",
+        },
+        {"code": "PSY", "name_de": "Psychologie", "name_en": "Psychology"},
+        {"code": "INT", "name_de": "Fachübergreifend", "name_en": "Interdisciplinary"},
+    ]
+    with Session(engine) as session:
+        existing_categories = session.exec(select(Category)).first()
+        if existing_categories:
+            logger.info("Category data already exists, skipping initialization")
+            return
+
+        for category_data in categories:
+            category = Category(
+                code=category_data["code"],
+                name_de=category_data["name_de"],
+                name_en=category_data["name_en"],
+            )
+            session.add(category)
+        session.commit()
+    logger.info("Category data loaded successfully")
+    return
+
+
+def load_event_type_data():
+    """Load initial event type data into the database."""
+    logger.info("Loading initial event type data")
+    event_types = [
+        {
+            "code": "CON",
+            "name_de": "Konferenz",
+            "name_en": "Conference",
+            "description_de": "Eine formelle Versammlung von Personen mit gemeinsamen Interessen.",
+            "description_en": "A formal gathering of people with shared interests.",
+        },
+        {
+            "code": "WOR",
+            "name_de": "Workshop",
+            "name_en": "Workshop",
+            "description_de": "Eine interaktive Sitzung zur Vermittlung von Fähigkeiten oder Wissen.",
+            "description_en": "An interactive session for skill or knowledge transfer.",
+        },
+        {
+            "code": "SEM",
+            "name_de": "Seminar",
+            "name_en": "Seminar",
+            "description_de": "Eine akademische Veranstaltung zur Diskussion eines bestimmten Themas.",
+            "description_en": "An academic event for discussing a specific topic.",
+        },
+        {
+            "code": "WEB",
+            "name_de": "Webinar",
+            "name_en": "Webinar",
+            "description_de": "Ein Online-Seminar, das über das Internet abgehalten wird.",
+            "description_en": "An online seminar conducted over the internet.",
+        },
+    ]
+    with Session(engine) as session:
+        existing_event_types = session.exec(select(EventType)).first()
+        if existing_event_types:
+            logger.info("Event type data already exists, skipping initialization")
+            return
+
+        for event_type_data in event_types:
+            event_type = EventType(
+                code=event_type_data["code"],
+                name_de=event_type_data["name_de"],
+                name_en=event_type_data["name_en"],
+                description_de=event_type_data["description_de"],
+                description_en=event_type_data["description_en"],
+            )
+            session.add(event_type)
+        session.commit()
+    logger.info("Event type data loaded successfully")
+    return
 
 
 def create_initial_data():
     load_country_data()
-
+    load_category_data()
+    load_event_type_data()
     # Create a session from the SessionLocal factory
-    logger.debug("Creating session for initial data seeding")
+    logger.info("Creating session for initial data seeding")
     with Session(engine) as session:
         # --- Permissions ---
         permission_names = [
@@ -115,6 +220,7 @@ def create_initial_data():
             Users.Update,
             Users.Delete,
             Users.ChangePassword,
+            Users.ShowMe,
             UserPermissions.List,
             UserPermissions.Show,
             UserPermissions.Create,
@@ -126,30 +232,38 @@ def create_initial_data():
             UserRoles.Update,
             UserRoles.Delete,
         ]
-        logger.debug("Checking existing permissions in the database")
+        logger.info("Checking existing permissions in the database")
         existing_permissions = session.exec(select(Permission)).all()
+        logger.info(f"Existing permissions: {existing_permissions}")
         if not existing_permissions:
+            logger.info(permission_names)
             logger.info("Seeding initial permissions")
             for name in permission_names:
                 session.add(Permission(name=name))
             session.commit()
 
-        admin_role = session.exec(select(Role).where(Role.name == "admin")).first()
-        user_role = session.exec(select(Role).where(Role.name == "user")).first()
-        guest_role = session.exec(select(Role).where(Role.name == "guest")).first()
+        admin_role = session.exec(
+            select(Role).where(Role.name == settings.ADMIN_ROLE_NAME)
+        ).first()
+        user_role = session.exec(
+            select(Role).where(Role.name == settings.USER_ROLE_NAME)
+        ).first()
+        guest_role = session.exec(
+            select(Role).where(Role.name == settings.GUEST_ROLE_NAME)
+        ).first()
         logger.debug("Checking existing roles in the database")
         if not admin_role or not user_role or not guest_role:
             if not admin_role:
                 logger.info("Seeding admin role")
-                admin_role = Role(name="admin")
+                admin_role = Role(name=settings.ADMIN_ROLE_NAME)
                 session.add(admin_role)
             if not user_role:
                 logger.info("Seeding user role")
-                user_role = Role(name="user")
+                user_role = Role(name=settings.USER_ROLE_NAME)
                 session.add(user_role)
             if not guest_role:
                 logger.info("Seeding guest role")
-                guest_role = Role(name="guest")
+                guest_role = Role(name=settings.GUEST_ROLE_NAME)
                 session.add(guest_role)
             session.commit()
 

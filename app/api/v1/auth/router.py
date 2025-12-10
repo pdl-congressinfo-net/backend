@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from sqlmodel import select
 
@@ -11,13 +11,11 @@ from app.api.v1.users.schema import (
     UserLogin,
 )
 from app.common.deps import (
-    check_permissions_role,
-    check_permissions_user,
     get_current_user,
     get_db,
 )
 from app.core.config import settings
-from app.core.mail import send_email
+from app.integrations.mail.mail import send_email
 from app.core.security import (
     create_access_token,
     create_magic_link,
@@ -29,6 +27,7 @@ from app.core.security import (
     verify_password,
 )
 from app.features.users.model import LoginOTP, User
+from app.features.users.service import get_user_permissions, list_guest_permissions
 
 auth_router = APIRouter()
 
@@ -72,6 +71,9 @@ async def login_user(
 
     set_split_jwt_cookies(response, access_token)
     set_refresh_cookie(response, refresh_token)
+
+    user.last_login = datetime.utcnow()
+    db.commit()
 
     return {"detail": "Login successful"}
 
@@ -209,36 +211,13 @@ async def magic_login(request: MagicLoginRequest, db: Session = Depends(get_db))
     return response
 
 
-@auth_router.post("/refresh")
-async def refresh_token(response: Response, refresh_token: str = Cookie(None)):
-    if not refresh_token:
-        raise HTTPException(status_code=401, detail="Missing refresh token")
-
-    payload = decode_magic_token(refresh_token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
-
-    email = payload["sub"]
-
-    access_expires = timedelta(minutes=15)
-    refresh_expires = timedelta(days=7)
-
-    access_token = create_access_token({"sub": email}, access_expires)
-    refresh_token = create_access_token({"sub": email}, refresh_expires)
-
-    response = Response()
-    set_refresh_cookie(response, refresh_token)
-    set_split_jwt_cookies(response, access_token)
-    return response
-
-
-@auth_router.post("/permissions")
-async def get_current_user_permissions(
-    permission: PermissionBase,
+@auth_router.get("/permissions", response_model=list[PermissionBase])
+async def get_all_permissions(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if user:
-        return check_permissions_user(user, [permission.permission])
+        permissions = get_user_permissions(db, user.id, True)
     else:
-        return check_permissions_role("guest", [permission.permission], db)
+        permissions = list_guest_permissions(db)
+    return [PermissionBase(name=perm.name) for perm in permissions]
