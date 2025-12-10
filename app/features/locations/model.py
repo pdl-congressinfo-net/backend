@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -27,8 +27,8 @@ class Country(SQLModel, table=True):
     name: str = Field(unique=True, index=True)
     code2: str = Field(unique=True, index=True, max_length=2)
     code3: str = Field(unique=True, index=True, max_length=3)
-    devco: bool | None = Field(default=False)  # noqa: UP007
-    preferred: bool | None = Field(default=False)  # noqa: UP007
+    devco: Optional[bool] = Field(default=False)
+    preferred: Optional[bool] = Field(default=False)
 
     locations: list["Location"] = Relationship(back_populates="country")
 
@@ -40,18 +40,18 @@ class Location(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     name: str = Field(unique=True, index=True)
-    road: str | None = None  # noqa: UP007
-    number: str | None = None  # noqa: UP007
-    city: str | None = None  # noqa: UP007
-    state: str | None = None  # noqa: UP007
-    postal_code: str | None = None  # noqa: UP007
-    latitude: float | None = None  # noqa: UP007
-    longitude: float | None = None  # noqa: UP007
-    link: str | None = None  # noqa: UP007
+    road: Optional[str] = None
+    number: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    postal_code: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    link: Optional[str] = None
 
-    country_id: str | None = Field(default=None, foreign_key="countries.id")  # noqa: UP007
-    location_type_id: str | None = Field(default=None, foreign_key="location_types.id")  # noqa: UP007
+    country_id: Optional[str] = Field(default=None, foreign_key="countries.id")
+    location_type_id: Optional[str] = Field(default=None, foreign_key="location_types.id")
 
-    country: Country | None = Relationship(back_populates="locations")  # noqa: UP007
-    location_type: LocationType | None = Relationship(back_populates="locations")  # noqa: UP007
+    country: Optional[Country] = Relationship(back_populates="locations")
+    location_type: Optional[LocationType] = Relationship(back_populates="locations")
     events: list["Event"] = Relationship(back_populates="location")

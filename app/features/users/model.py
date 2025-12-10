@@ -1,11 +1,10 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from app.features.files.model import File
     from app.features.permissions.model import Permission
     from app.features.roles.model import Role
 
@@ -33,10 +32,10 @@ class User(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     email: str = Field(unique=True, index=True)
-    full_name: str | None = None  # noqa: UP007
+    full_name: Optional[str] = None  # noqa: UP007
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_login: datetime | None = None  # noqa: UP007
+    last_login: Optional[datetime] = None  # noqa: UP007
 
     # Relationships
     roles: list["Role"] = Relationship(back_populates="users", link_model=UserRole)
@@ -44,7 +43,6 @@ class User(SQLModel, table=True):
         back_populates="users", link_model=UserPermission
     )
     login_otps: list["LoginOTP"] = Relationship(back_populates="user")
-    files: list["File"] = Relationship(back_populates="uploaded_by")
 
 
 class LoginOTP(SQLModel, table=True):
@@ -58,4 +56,4 @@ class LoginOTP(SQLModel, table=True):
     resend_available_at: datetime = Field()
     used: bool = Field(default=False)
 
-    user: User | None = Relationship(back_populates="login_otps")  # noqa: UP007
+    user: Optional["User"] = Relationship(back_populates="login_otps")

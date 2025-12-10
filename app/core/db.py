@@ -3,8 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import QueuePool
 
 from app.core.config import settings
-from app.features.events.model import Category, Event, EventType  # noqa: F401
-from app.features.files.model import File  # noqa: F401
+from app.features.events.model import Event, EventType  # noqa: F401
 from app.features.locations.model import Country, Location, LocationType  # noqa: F401
 from app.features.permissions.model import Permission  # noqa: F401
 from app.features.roles.model import Role, RolePermission  # noqa: F401

@@ -20,7 +20,7 @@ from app.common.permissions import (
 from app.core.config import settings
 from app.core.db import engine
 from app.core.security import get_password_hash
-from app.features.events.model import Category, EventType
+from app.features.events.model import EventType
 from app.features.locations.model import Country
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role, RolePermission
@@ -57,55 +57,6 @@ def load_country_data():
             session.commit()
     logger.info("Country data loaded successfully")
     return
-
-
-def load_category_data():
-    """Load initial category data into the database."""
-    logger.info("Loading initial category data")
-    categories = [
-        {"code": "MED", "name_de": "Medizin", "name_en": "Medicine"},
-        {"code": "ENG", "name_de": "Technik", "name_en": "Engineering / Technology"},
-        {"code": "ECO", "name_de": "Wirtschaft", "name_en": "Economics / Business"},
-        {
-            "code": "NAT",
-            "name_de": "Naturwissenschaften",
-            "name_en": "Natural Sciences",
-        },
-        {"code": "TOU", "name_de": "Tourismus", "name_en": "Tourism"},
-        {"code": "LAW", "name_de": "Recht", "name_en": "Law"},
-        {"code": "HUM", "name_de": "Geisteswissenschaften", "name_en": "Humanities"},
-        {
-            "code": "SOC",
-            "name_de": "Sozialwissenschaften",
-            "name_en": "Social Sciences",
-        },
-        {"code": "TRA", "name_de": "Verkehr", "name_en": "Transport / Traffic"},
-        {"code": "OTH", "name_de": "Andere", "name_en": "Other"},
-        {
-            "code": "SEL",
-            "name_de": "--- bitte auswählen ---",
-            "name_en": "--- please select ---",
-        },
-        {"code": "PSY", "name_de": "Psychologie", "name_en": "Psychology"},
-        {"code": "INT", "name_de": "Fachübergreifend", "name_en": "Interdisciplinary"},
-    ]
-    with Session(engine) as session:
-        existing_categories = session.exec(select(Category)).first()
-        if existing_categories:
-            logger.info("Category data already exists, skipping initialization")
-            return
-
-        for category_data in categories:
-            category = Category(
-                code=category_data["code"],
-                name_de=category_data["name_de"],
-                name_en=category_data["name_en"],
-            )
-            session.add(category)
-        session.commit()
-    logger.info("Category data loaded successfully")
-    return
-
 
 def load_event_type_data():
     """Load initial event type data into the database."""
@@ -162,7 +113,6 @@ def load_event_type_data():
 
 def create_initial_data():
     load_country_data()
-    load_category_data()
     load_event_type_data()
     # Create a session from the SessionLocal factory
     logger.info("Creating session for initial data seeding")
