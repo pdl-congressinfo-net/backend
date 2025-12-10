@@ -2,7 +2,6 @@ from fastapi import APIRouter
 
 from app.api.v1.auth.router import auth_router
 from app.api.v1.events.router import events_router
-from app.api.v1.files.router import files_router
 from app.api.v1.locations.router import locations_router
 from app.api.v1.permissions.router import permissions_router
 from app.api.v1.roles.router import roles_router
@@ -20,4 +19,3 @@ v1_router.include_router(
 v1_router.include_router(roles_router, prefix="/roles", tags=["roles"])
 v1_router.include_router(users_router, prefix="/users", tags=["users"])
 v1_router.include_router(utils_router, prefix="/utils", tags=["utils"])
-v1_router.include_router(files_router, prefix="/files", tags=["files"])
