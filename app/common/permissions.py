@@ -44,6 +44,14 @@ class Countries(Permission, resource="countries"):
     pass
 
 
+class LocationTypes(Permission, resource="locationtypes"):
+    pass
+
+
+class Locations(Permission, resource="locations"):
+    pass
+
+
 class Events(Permission, resource="events"):
     @classproperty
     def Participate(cls) -> str:
@@ -53,16 +61,12 @@ class Events(Permission, resource="events"):
     def ListAll(cls) -> str:
         return cls._get_permission("listall")
 
+    @classproperty
+    def Publish(cls) -> str:
+        return cls._get_permission("publish")
+
 
 class EventTypes(Permission, resource="eventtypes"):
-    pass
-
-
-class Locations(Permission, resource="locations"):
-    pass
-
-
-class LocationTypes(Permission, resource="locationtypes"):
     pass
 
 

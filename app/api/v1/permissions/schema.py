@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 
 
+# =========================
+# PERMISSION SCHEMAS
+# =========================
 class PermissionBase(BaseModel):
     name: str
 
@@ -15,3 +18,6 @@ class PermissionUpdate(BaseModel):
 
 class PermissionRead(PermissionBase):
     id: str
+
+    class Config:
+        from_attributes = True

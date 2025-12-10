@@ -1,16 +1,7 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
-from app.api.v1.locations.schema import (
-    CountryRead,
-    CountryUpdate,
-    LocationCreate,
-    LocationRead,
-    LocationTypeCreate,
-    LocationTypeRead,
-    LocationTypeUpdate,
-    LocationUpdate,
-)
+from app.api.v1.locations import schema
 from app.common.deps import get_db, require_permission
 from app.common.permissions import Countries, Locations, LocationTypes
 from app.common.refine import refine_list_response
@@ -22,34 +13,35 @@ from app.utils.pagination import PaginationParams
 locations_router = APIRouter()
 
 
-@locations_router.get("/types", response_model=list[LocationTypeRead])
-async def list_locations_types(
+# =========================
+# LOCATION TYPE ENDPOINTS
+# =========================
+@locations_router.get("/types", response_model=list[schema.LocationTypeRead])
+async def list_location_types(
     response: Response,
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(LocationTypes.List)),
 ):
-    """List all locations types."""
-    location_types, total = service.list_location_types(db, pagination)
-    return refine_list_response(response, location_types, total)
+    """List all location types."""
+    results, total = service.list_location_types(db, pagination)
+    return refine_list_response(response, results, total)
 
 
-@locations_router.get(
-    "/types/{location_type_id}", response_model=ApiResponse[LocationTypeRead]
-)
+@locations_router.get("/types/{location_type_id}", response_model=ApiResponse[schema.LocationTypeRead])
 async def get_location_type(
     location_type_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(LocationTypes.Show)),
 ):
-    """Get location type by ID."""
+    """Get a specific location type by ID."""
     location_type = service.get_location_type(db, location_type_id)
     return ApiResponse(data=location_type)
 
 
-@locations_router.post("/types", response_model=ApiResponse[LocationTypeRead])
+@locations_router.post("/types", response_model=ApiResponse[schema.LocationTypeRead])
 async def create_location_type(
-    location_type: LocationTypeCreate,
+    location_type: schema.LocationTypeCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(LocationTypes.Create)),
 ):
@@ -58,12 +50,10 @@ async def create_location_type(
     return ApiResponse(data=db_location_type)
 
 
-@locations_router.put(
-    "/types/{location_type_id}", response_model=ApiResponse[LocationTypeRead]
-)
+@locations_router.patch("/types/{location_type_id}", response_model=ApiResponse[schema.LocationTypeRead])
 async def update_location_type(
     location_type_id: str,
-    location_type: LocationTypeUpdate,
+    location_type: schema.LocationTypeUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(LocationTypes.Update)),
 ):
@@ -83,7 +73,10 @@ async def delete_location_type(
     return MessageResponse(message="Location type deleted successfully")
 
 
-@locations_router.get("/countries", response_model=list[CountryRead])
+# =========================
+# COUNTRY ENDPOINTS
+# =========================
+@locations_router.get("/countries", response_model=list[schema.CountryRead])
 async def list_countries(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -91,26 +84,24 @@ async def list_countries(
     current_user: User = Depends(require_permission(Countries.List)),
 ):
     """List all countries."""
-    countries, total = service.list_countries(db, pagination)
-    return refine_list_response(response, countries, total)
+    results, total = service.list_countries(db, pagination)
+    return refine_list_response(response, results, total)
 
 
-@locations_router.get(
-    "/countries/{country_id}", response_model=ApiResponse[CountryRead]
-)
+@locations_router.get("/countries/{country_id}", response_model=ApiResponse[schema.CountryRead])
 async def get_country(
     country_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Countries.Show)),
 ):
-    """Get country by ID."""
+    """Get a specific country by ID."""
     country = service.get_country(db, country_id)
     return ApiResponse(data=country)
 
 
-@locations_router.post("/countries", response_model=ApiResponse[CountryRead])
+@locations_router.post("/countries", response_model=ApiResponse[schema.CountryRead])
 async def create_country(
-    country: CountryRead,
+    country: schema.CountryCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Countries.Create)),
 ):
@@ -119,12 +110,10 @@ async def create_country(
     return ApiResponse(data=db_country)
 
 
-@locations_router.put(
-    "/countries/{country_id}", response_model=ApiResponse[CountryRead]
-)
+@locations_router.patch("/countries/{country_id}", response_model=ApiResponse[schema.CountryRead])
 async def update_country(
     country_id: str,
-    country: CountryUpdate,
+    country: schema.CountryUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Countries.Update)),
 ):
@@ -144,7 +133,10 @@ async def delete_country(
     return MessageResponse(message="Country deleted successfully")
 
 
-@locations_router.get("", response_model=list[LocationRead])
+# =========================
+# LOCATION ENDPOINTS
+# =========================
+@locations_router.get("/", response_model=list[schema.LocationRead])
 async def list_locations(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -156,20 +148,20 @@ async def list_locations(
     return refine_list_response(response, results, total)
 
 
-@locations_router.get("/{location_id}", response_model=ApiResponse[LocationRead])
+@locations_router.get("/{location_id}", response_model=ApiResponse[schema.LocationRead])
 async def get_location(
     location_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Locations.Show)),
 ):
-    """Get location by ID."""
+    """Get a specific location by ID."""
     location = service.get_location(db, location_id)
     return ApiResponse(data=location)
 
 
-@locations_router.post("", response_model=ApiResponse[LocationRead])
+@locations_router.post("/", response_model=ApiResponse[schema.LocationRead])
 async def create_location(
-    location: LocationCreate,
+    location: schema.LocationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Locations.Create)),
 ):
@@ -178,10 +170,10 @@ async def create_location(
     return ApiResponse(data=db_location)
 
 
-@locations_router.put("/{location_id}", response_model=ApiResponse[LocationRead])
+@locations_router.patch("/{location_id}", response_model=ApiResponse[schema.LocationRead])
 async def update_location(
     location_id: str,
-    location: LocationUpdate,
+    location: schema.LocationUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Locations.Update)),
 ):

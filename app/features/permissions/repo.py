@@ -17,6 +17,10 @@ def get_permission_by_id(db: Session, permission_id: str):
     return db.query(Permission).filter(Permission.id == permission_id).first()
 
 
+def get_permission_by_name(db: Session, name: str):
+    return db.query(Permission).filter(Permission.name == name).first()
+
+
 def create_permission(db: Session, permission: Permission):
     db.add(permission)
     db.commit()

@@ -13,60 +13,10 @@ from app.utils.pagination import PaginationParams
 roles_router = APIRouter()
 
 
-@roles_router.get("/permissions", response_model=list[schema.RolePermissionRead])
-async def list_role_permissions(
-    response: Response,
-    pagination: PaginationParams = Depends(),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.List)),
-):
-    """List all roles."""
-    results, total = service.list_role_permissions(db, pagination)
-    return refine_list_response(response, results, total)
-
-
-@roles_router.get(
-    "/permissions/{role_permission_id}",
-    response_model=ApiResponse[schema.RolePermissionRead],
-)
-async def get_role_permission(
-    role_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Show)),
-):
-    """Get role permission by ID."""
-    role_permission = service.get_permissions_by_role(db, role_id)
-    return ApiResponse(data=role_permission)
-
-
-@roles_router.post(
-    "/permissions", response_model=ApiResponse[schema.RolePermissionRead]
-)
-async def create_role_permission(
-    role_permission: schema.RolePermissionCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Create)),
-):
-    """Create a new role permission."""
-    db_role_permission = service.create_role_permission(db, role_permission)
-    return ApiResponse(data=db_role_permission)
-
-
-@roles_router.delete(
-    "/permissions/{role_id}/{permission_id}", response_model=MessageResponse
-)
-async def delete_role_permission(
-    role_id: str,
-    permission_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Delete)),
-):
-    """Delete a role permission."""
-    service.delete_role_permission(db, role_id, permission_id)
-    return MessageResponse(message="Role deleted successfully")
-
-
-@roles_router.get("", response_model=list[schema.RoleRead])
+# =========================
+# ROLE ENDPOINTS
+# =========================
+@roles_router.get("/", response_model=list[schema.RoleRead])
 async def list_roles(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -84,12 +34,12 @@ async def get_role(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Roles.Show)),
 ):
-    """Get role by ID."""
+    """Get a specific role by ID."""
     role = service.get_role(db, role_id)
     return ApiResponse(data=role)
 
 
-@roles_router.post("", response_model=ApiResponse[schema.RoleRead])
+@roles_router.post("/", response_model=ApiResponse[schema.RoleRead])
 async def create_role(
     role: schema.RoleCreate,
     db: Session = Depends(get_db),
@@ -100,7 +50,7 @@ async def create_role(
     return ApiResponse(data=db_role)
 
 
-@roles_router.put("/{role_id}", response_model=ApiResponse[schema.RoleRead])
+@roles_router.patch("/{role_id}", response_model=ApiResponse[schema.RoleRead])
 async def update_role(
     role_id: str,
     role: schema.RoleUpdate,
@@ -121,3 +71,56 @@ async def delete_role(
     """Delete a role."""
     service.delete_role(db, role_id)
     return MessageResponse(message="Role deleted successfully")
+
+
+# =========================
+# ROLE PERMISSION ENDPOINTS
+# =========================
+@roles_router.get("/permissions/all", response_model=list[schema.RolePermissionRead])
+async def list_role_permissions(
+    response: Response,
+    pagination: PaginationParams = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.List)),
+):
+    """List all role permissions."""
+    results, total = service.list_role_permissions(db, pagination)
+    return refine_list_response(response, results, total)
+
+
+@roles_router.get("/{role_id}/permissions")
+async def get_role_permissions(
+    role_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.Show)),
+):
+    """Get permissions for a specific role."""
+    permissions = service.get_role_permissions(db, role_id)
+    return ApiResponse(data=permissions)
+
+
+@roles_router.post("/permissions", response_model=ApiResponse[schema.RolePermissionRead])
+async def create_role_permission(
+    role_permission: schema.RolePermissionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.Create)),
+):
+    """Assign a permission to a role."""
+    db_role_permission = service.assign_role_permission(
+        db, role_permission.role_id, role_permission.permission_id
+    )
+    return ApiResponse(data=db_role_permission)
+
+
+@roles_router.delete(
+    "/permissions/{role_id}/{permission_id}", response_model=MessageResponse
+)
+async def delete_role_permission(
+    role_id: str,
+    permission_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.Delete)),
+):
+    """Remove a permission from a role."""
+    service.remove_role_permission(db, role_id, permission_id)
+    return MessageResponse(message="Role permission deleted successfully")

@@ -1,40 +1,8 @@
 from sqlalchemy.orm import Session
 
-from app.features.events.model import Category, Event, EventType
+from app.features.events.model import Event, EventType
 from app.utils.pagination import PaginationParams
 from app.utils.refine_query import refine_query
-
-
-# =========================
-# CATEGORY REPO
-# =========================
-def list_categories(db: Session, pagination: PaginationParams):
-    query = db.query(Category)
-    return refine_query(query, Category, pagination)
-
-
-def get_category_by_id(db: Session, category_id: str):
-    return db.query(Category).filter(Category.id == category_id).first()
-
-
-def create_category(db: Session, category: Category):
-    db.add(category)
-    db.commit()
-    db.refresh(category)
-    return category
-
-
-def update_category(db: Session, category: Category, updates: dict):
-    for key, value in updates.items():
-        setattr(category, key, value)
-    db.commit()
-    db.refresh(category)
-    return category
-
-
-def delete_category(db: Session, category: Category):
-    db.delete(category)
-    db.commit()
 
 
 # =========================
@@ -47,6 +15,10 @@ def list_event_types(db: Session, pagination: PaginationParams):
 
 def get_event_type_by_id(db: Session, event_type_id: str):
     return db.query(EventType).filter(EventType.id == event_type_id).first()
+
+
+def get_event_type_by_code(db: Session, code: str):
+    return db.query(EventType).filter(EventType.code == code).first()
 
 
 def create_event_type(db: Session, event_type: EventType):
@@ -72,10 +44,8 @@ def delete_event_type(db: Session, event_type: EventType):
 # =========================
 # EVENT REPO
 # =========================
-def list_events(db: Session, can_view_all: bool, pagination: PaginationParams):
+def list_events(db: Session, pagination: PaginationParams):
     query = db.query(Event)
-    if not can_view_all:
-        query = query.filter(Event.is_public == True)  # noqa: E712
     return refine_query(query, Event, pagination)
 
 

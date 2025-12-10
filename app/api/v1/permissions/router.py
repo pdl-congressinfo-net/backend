@@ -14,9 +14,9 @@ permissions_router = APIRouter()
 
 
 # =========================
-# PERMISSIONS
+# PERMISSION ENDPOINTS
 # =========================
-@permissions_router.get("", response_model=list[schema.PermissionRead])
+@permissions_router.get("/", response_model=list[schema.PermissionRead])
 async def list_permissions(
     response: Response,
     pagination: PaginationParams = Depends(),
@@ -24,24 +24,22 @@ async def list_permissions(
     current_user: User = Depends(require_permission(Permissions.List)),
 ):
     """List all permissions."""
-    permissions, total = service.list_permissions(db, pagination)
-    return refine_list_response(response, permissions, total)
+    results, total = service.list_permissions(db, pagination)
+    return refine_list_response(response, results, total)
 
 
-@permissions_router.get(
-    "/{permission_id}", response_model=ApiResponse[schema.PermissionRead]
-)
+@permissions_router.get("/{permission_id}", response_model=ApiResponse[schema.PermissionRead])
 async def get_permission(
     permission_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Permissions.Show)),
 ):
-    """Get permission by ID."""
+    """Get a specific permission by ID."""
     permission = service.get_permission(db, permission_id)
     return ApiResponse(data=permission)
 
 
-@permissions_router.post("", response_model=ApiResponse[schema.PermissionRead])
+@permissions_router.post("/", response_model=ApiResponse[schema.PermissionRead])
 async def create_permission(
     permission: schema.PermissionCreate,
     db: Session = Depends(get_db),
@@ -52,9 +50,7 @@ async def create_permission(
     return ApiResponse(data=db_permission)
 
 
-@permissions_router.put(
-    "/{permission_id}", response_model=ApiResponse[schema.PermissionRead]
-)
+@permissions_router.patch("/{permission_id}", response_model=ApiResponse[schema.PermissionRead])
 async def update_permission(
     permission_id: str,
     permission: schema.PermissionUpdate,
