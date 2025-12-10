@@ -33,7 +33,7 @@ class CountryBase(BaseModel):
     code2: str
     code3: str
     devco: bool = False
-    preferred: bool = False
+    preferred: bool | None = False
 
 
 class CountryCreate(CountryBase):
