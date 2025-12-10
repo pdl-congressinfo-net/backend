@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
-from backend.app.features.locations.model import Location
+from app.features.locations.model import Location
 from sqlmodel import Field, Relationship, SQLModel
 
 class EventType(SQLModel, table=True):
