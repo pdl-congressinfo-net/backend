@@ -20,7 +20,6 @@ from app.common.permissions import (
 from app.core.config import settings
 from app.core.db import engine
 from app.core.security import get_password_hash
-from app.features.companies.model import CompanyType
 from app.features.events.model import EventType
 from app.features.locations.model import Country, LocationType
 from app.features.permissions.model import Permission
@@ -110,29 +109,6 @@ def load_event_type_data():
             session.add(event_type)
         session.commit()
     logger.info("Event type data loaded successfully")
-    return
-
-
-def create_company_types():
-    logger.info("Loading initial company types")
-    company_types = [
-        {"code": "CMP", "name": "Company"},
-        {"code": "SPR", "name": "Sponsor"},
-    ]
-    with Session(engine) as session:
-        existing_company_types = session.exec(select(CompanyType)).first()
-        if existing_company_types:
-            logger.info("Company type data already exists, skipping initialization")
-            return
-
-        for company_type_data in company_types:
-            company_type = CompanyType(
-                code=company_type_data["code"],
-                name=company_type_data["name"],
-            )
-            session.add(company_type)
-        session.commit()
-    logger.info("Company type data loaded successfully")
     return
 
 
