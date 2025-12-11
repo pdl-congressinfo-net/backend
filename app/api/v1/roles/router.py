@@ -99,7 +99,9 @@ async def get_role_permissions(
     return ApiResponse(data=permissions)
 
 
-@roles_router.post("/permissions", response_model=ApiResponse[schema.RolePermissionRead])
+@roles_router.post(
+    "/permissions", response_model=ApiResponse[schema.RolePermissionRead]
+)
 async def create_role_permission(
     role_permission: schema.RolePermissionCreate,
     db: Session = Depends(get_db),

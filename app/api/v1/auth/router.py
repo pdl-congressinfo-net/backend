@@ -15,7 +15,6 @@ from app.common.deps import (
     get_db,
 )
 from app.core.config import settings
-from app.integrations.mail.mail import send_email
 from app.core.security import (
     create_access_token,
     create_magic_link,
@@ -28,6 +27,7 @@ from app.core.security import (
 )
 from app.features.users.model import LoginOTP, User
 from app.features.users.service import get_user_permissions, list_guest_permissions
+from app.integrations.mail.mail import send_email
 
 auth_router = APIRouter()
 

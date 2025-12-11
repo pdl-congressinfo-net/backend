@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -9,10 +8,6 @@ from pydantic import BaseModel
 # =========================
 class EventTypeBase(BaseModel):
     code: str
-    name_de: str
-    name_en: str
-    description_de: Optional[str] = None
-    description_en: Optional[str] = None
 
 
 class EventTypeCreate(EventTypeBase):
@@ -21,10 +16,6 @@ class EventTypeCreate(EventTypeBase):
 
 class EventTypeUpdate(BaseModel):
     code: str | None = None
-    name_de: str | None = None
-    name_en: str | None = None
-    description_de: str | None = None
-    description_en: str | None = None
 
 
 class EventTypeRead(EventTypeBase):
@@ -42,8 +33,8 @@ class EventBase(BaseModel):
     start_date: datetime
     end_date: datetime
     is_public: bool = False
-    event_type_id: Optional[str] = None
-    location_id: Optional[str] = None
+    event_type_id: str | None = None
+    location_id: str | None = None
 
 
 class EventCreate(EventBase):

@@ -49,13 +49,17 @@ def list_user_permissions(db: Session, permission: UserPermission):
 
 
 def list_guest_permissions(db: Session, request):
-    guest_role = (
-        db.query(Role).filter(Role.name == settings.GUEST_ROLE_NAME).first()
-    )
+    guest_role = db.query(Role).filter(Role.name == settings.GUEST_ROLE_NAME).first()
     if not guest_role:
         return [], 0
-    query = db.query(Permission).join(RolePermission).filter(RolePermission.role_id == guest_role.id)
-    return refine_query(query, Permission, PaginationParams(request, _start=1, _end=1000))
+    query = (
+        db.query(Permission)
+        .join(RolePermission)
+        .filter(RolePermission.role_id == guest_role.id)
+    )
+    return refine_query(
+        query, Permission, PaginationParams(request, _start=1, _end=1000)
+    )
 
 
 def get_permissions_by_user_id(db: Session, user_id: str):

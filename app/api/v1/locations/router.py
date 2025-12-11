@@ -28,7 +28,9 @@ async def list_location_types(
     return refine_list_response(response, results, total)
 
 
-@locations_router.get("/types/{location_type_id}", response_model=ApiResponse[schema.LocationTypeRead])
+@locations_router.get(
+    "/types/{location_type_id}", response_model=ApiResponse[schema.LocationTypeRead]
+)
 async def get_location_type(
     location_type_id: str,
     db: Session = Depends(get_db),
@@ -50,7 +52,9 @@ async def create_location_type(
     return ApiResponse(data=db_location_type)
 
 
-@locations_router.patch("/types/{location_type_id}", response_model=ApiResponse[schema.LocationTypeRead])
+@locations_router.patch(
+    "/types/{location_type_id}", response_model=ApiResponse[schema.LocationTypeRead]
+)
 async def update_location_type(
     location_type_id: str,
     location_type: schema.LocationTypeUpdate,
@@ -88,7 +92,9 @@ async def list_countries(
     return refine_list_response(response, results, total)
 
 
-@locations_router.get("/countries/{country_id}", response_model=ApiResponse[schema.CountryRead])
+@locations_router.get(
+    "/countries/{country_id}", response_model=ApiResponse[schema.CountryRead]
+)
 async def get_country(
     country_id: str,
     db: Session = Depends(get_db),
@@ -110,7 +116,9 @@ async def create_country(
     return ApiResponse(data=db_country)
 
 
-@locations_router.patch("/countries/{country_id}", response_model=ApiResponse[schema.CountryRead])
+@locations_router.patch(
+    "/countries/{country_id}", response_model=ApiResponse[schema.CountryRead]
+)
 async def update_country(
     country_id: str,
     country: schema.CountryUpdate,
@@ -170,7 +178,9 @@ async def create_location(
     return ApiResponse(data=db_location)
 
 
-@locations_router.patch("/{location_id}", response_model=ApiResponse[schema.LocationRead])
+@locations_router.patch(
+    "/{location_id}", response_model=ApiResponse[schema.LocationRead]
+)
 async def update_location(
     location_id: str,
     location: schema.LocationUpdate,

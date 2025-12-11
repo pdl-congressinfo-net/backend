@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.events import schema
 from app.common.deps import get_db, require_permission
-from app.common.permissions import EventTypes, Events
+from app.common.permissions import Events, EventTypes
 from app.common.refine import refine_list_response
 from app.common.responses import ApiResponse, MessageResponse
 from app.features.events import service
@@ -28,7 +28,9 @@ async def list_event_types(
     return refine_list_response(response, results, total)
 
 
-@events_router.get("/types/{event_type_id}", response_model=ApiResponse[schema.EventTypeRead])
+@events_router.get(
+    "/types/{event_type_id}", response_model=ApiResponse[schema.EventTypeRead]
+)
 async def get_event_type(
     event_type_id: str,
     db: Session = Depends(get_db),
@@ -50,7 +52,9 @@ async def create_event_type(
     return ApiResponse(data=db_event_type)
 
 
-@events_router.patch("/types/{event_type_id}", response_model=ApiResponse[schema.EventTypeRead])
+@events_router.patch(
+    "/types/{event_type_id}", response_model=ApiResponse[schema.EventTypeRead]
+)
 async def update_event_type(
     event_type_id: str,
     event_type: schema.EventTypeUpdate,
@@ -78,7 +82,7 @@ async def delete_event_type(
 # =========================
 @events_router.get("", response_model=list[schema.EventRead])
 async def list_events(
-    response: Response, 
+    response: Response,
     pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permission(Events.List)),
@@ -144,7 +148,9 @@ async def publish_event(
     return ApiResponse(data=db_event)
 
 
-@events_router.post("/{event_id}/unpublish", response_model=ApiResponse[schema.EventRead])
+@events_router.post(
+    "/{event_id}/unpublish", response_model=ApiResponse[schema.EventRead]
+)
 async def unpublish_event(
     event_id: str,
     db: Session = Depends(get_db),

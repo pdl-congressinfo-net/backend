@@ -102,3 +102,11 @@ class UserRoles(Permission, resource="userroles"):
 
 class Categories(Permission, resource="categories"):
     pass
+
+
+class Companies(Permission, resource="companies"):
+    pass
+
+
+class CompanyEmployees(Permission, resource="companyemployees"):
+    pass

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 # LOCATION TYPE SCHEMAS
 # =========================
 class LocationTypeBase(BaseModel):
-    name: str
+    code: str
 
 
 class LocationTypeCreate(LocationTypeBase):
@@ -13,7 +13,7 @@ class LocationTypeCreate(LocationTypeBase):
 
 
 class LocationTypeUpdate(BaseModel):
-    name: str | None = None
+    code: str | None = None
 
 
 class LocationTypeRead(LocationTypeBase):

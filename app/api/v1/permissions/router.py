@@ -28,7 +28,9 @@ async def list_permissions(
     return refine_list_response(response, results, total)
 
 
-@permissions_router.get("/{permission_id}", response_model=ApiResponse[schema.PermissionRead])
+@permissions_router.get(
+    "/{permission_id}", response_model=ApiResponse[schema.PermissionRead]
+)
 async def get_permission(
     permission_id: str,
     db: Session = Depends(get_db),
@@ -50,7 +52,9 @@ async def create_permission(
     return ApiResponse(data=db_permission)
 
 
-@permissions_router.patch("/{permission_id}", response_model=ApiResponse[schema.PermissionRead])
+@permissions_router.patch(
+    "/{permission_id}", response_model=ApiResponse[schema.PermissionRead]
+)
 async def update_permission(
     permission_id: str,
     permission: schema.PermissionUpdate,
