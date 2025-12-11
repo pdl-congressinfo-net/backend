@@ -13,10 +13,6 @@ class EventType(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     code: str = Field(unique=True, index=True, max_length=3, min_length=3)
-    name_de: str = Field(unique=True, index=True)
-    name_en: str = Field(unique=True, index=True)
-    description_de: Optional[str] = None  # noqa: UP045
-    description_en: Optional[str] = None  # noqa: UP045
     events: List["Event"] = Relationship(back_populates="event_type")  # noqa: UP006
 
 
