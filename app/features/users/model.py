@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
+    from app.features.companies.model import CompanyEmployee
     from app.features.permissions.model import Permission
     from app.features.roles.model import Role
 
@@ -32,10 +33,11 @@ class User(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     email: str = Field(unique=True, index=True)
-    full_name: Optional[str] = None  # noqa: UP007
+    full_name: str | None = None  # noqa: UP007
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_login: Optional[datetime] = None  # noqa: UP007
+    last_login: datetime | None = None  # noqa: UP007
+    oeak_id: int | None = Field(default=None, index=True)  # noqa: UP007
 
     # Relationships
     roles: list["Role"] = Relationship(back_populates="users", link_model=UserRole)
@@ -43,6 +45,7 @@ class User(SQLModel, table=True):
         back_populates="users", link_model=UserPermission
     )
     login_otps: list["LoginOTP"] = Relationship(back_populates="user")
+    company_employee: Optional["CompanyEmployee"] = Relationship(back_populates="user")  # noqa: UP006
 
 
 class LoginOTP(SQLModel, table=True):

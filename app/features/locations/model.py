@@ -1,9 +1,10 @@
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
+    from app.features.companies.model import Company
     from app.features.events.model import Event
 
 
@@ -55,3 +56,4 @@ class Location(SQLModel, table=True):
     country: Country | None = Relationship(back_populates="locations")
     location_type: LocationType | None = Relationship(back_populates="locations")
     events: list["Event"] = Relationship(back_populates="location")
+    company: Optional["Company"] = Relationship(back_populates="location")  # noqa: UP006
