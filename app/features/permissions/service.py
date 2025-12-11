@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from app.common.exceptions import NotFoundError
 from app.features.permissions import repo
 from app.features.permissions.model import Permission
+from app.features.roles.repo import add_permission_to_role, get_role_by_name
 
 
 # =========================
@@ -28,7 +29,12 @@ def get_permission_by_name(db, name: str):
 
 def create_permission(db, payload: BaseModel):
     permission = Permission.model_validate(payload)
-    return repo.create_permission(db, permission)
+    created_permission = repo.create_permission(db, permission)
+
+    admin_role = get_role_by_name(db, "admin")
+    if admin_role:
+        add_permission_to_role(db, admin_role.id, created_permission.id)
+    return created_permission
 
 
 def update_permission(db, permission_id: str, payload: BaseModel):
