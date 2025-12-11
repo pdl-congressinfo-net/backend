@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -60,16 +58,15 @@ class CountryRead(CountryBase):
 # =========================
 class LocationBase(BaseModel):
     name: str
-    road: Optional[str] = None
-    number: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    postal_code: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    link: Optional[str] = None
-    country_id: Optional[str] = None
-    location_type_id: Optional[str] = None
+    road: str | None = None
+    number: str | None = None
+    city: str | None = None
+    postal_code: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    link: str | None = None
+    country_id: str | None = None
+    location_type_id: str | None = None
 
 
 class LocationCreate(LocationBase):
@@ -81,7 +78,6 @@ class LocationUpdate(BaseModel):
     road: str | None = None
     number: str | None = None
     city: str | None = None
-    state: str | None = None
     postal_code: str | None = None
     latitude: float | None = None
     longitude: float | None = None

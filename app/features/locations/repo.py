@@ -17,6 +17,10 @@ def get_location_type_by_id(db: Session, location_type_id: str):
     return db.query(LocationType).filter(LocationType.id == location_type_id).first()
 
 
+def get_location_type_by_code(db: Session, code: str):
+    return db.query(LocationType).filter(LocationType.code == code).first()
+
+
 def get_location_type_by_name(db: Session, name: str):
     return db.query(LocationType).filter(LocationType.name == name).first()
 

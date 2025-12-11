@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from app.api.v1.locations.schema import LocationUpdate
 from app.common.exceptions import NotFoundError
 from app.features.locations import repo
 from app.features.locations.model import Country, Location, LocationType
@@ -14,6 +15,13 @@ def list_location_types(db, pagination):
 
 def get_location_type(db, location_type_id: str):
     location_type = repo.get_location_type_by_id(db, location_type_id)
+    if not location_type:
+        raise NotFoundError("Location type not found")
+    return location_type
+
+
+def get_location_type_by_code(db, code: str):
+    location_type = repo.get_location_type_by_code(db, code)
     if not location_type:
         raise NotFoundError("Location type not found")
     return location_type
@@ -122,12 +130,29 @@ def create_location(db, payload: BaseModel):
     return repo.create_location(db, location)
 
 
-def update_location(db, location_id: str, payload: BaseModel):
+def update_location(db, location_id: str, payload: LocationUpdate):
     location = repo.get_location_by_id(db, location_id)
     if not location:
         raise NotFoundError("Location not found")
 
-    updates = payload.model_dump(exclude_unset=True)
+    # Add location_type based if link is given or not
+    location_type = get_location_type_by_code(db, "WEB" if payload.link else "SIT")
+    if location_type:
+        payload.location_type_id = location_type.id
+
+    # Remove link when on SIT and address when WEB
+    if location_type.code == "SIT":
+        payload.link = None
+    elif location_type.code == "WEB":
+        payload.road = None
+        payload.number = None
+        payload.city = None
+        payload.postal_code = None
+        payload.latitude = None
+        payload.longitude = None
+        payload.country_id = None
+
+    updates = payload.model_dump()
     return repo.update_location(db, location, updates)
 
 
