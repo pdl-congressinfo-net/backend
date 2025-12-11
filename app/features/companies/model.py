@@ -33,5 +33,5 @@ class Company(SQLModel, table=True):
     sponsoring: bool = Field(default=False)
     location_id: Optional[str] = Field(default=None, foreign_key="locations.id")  # noqa: UP045
 
-    locations: Optional[Location] = Relationship(back_populates="company")  # noqa: UP045
+    location: Optional[Location] = Relationship(back_populates="company")  # noqa: UP045
     employees: List["CompanyEmployee"] = Relationship(back_populates="company")  # noqa: UP006
