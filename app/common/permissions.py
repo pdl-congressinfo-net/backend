@@ -102,13 +102,3 @@ class UserRoles(Permission, resource="userroles"):
 
 class Categories(Permission, resource="categories"):
     pass
-
-
-class Files(Permission, resource="files"):
-    @classproperty
-    def Upload(cls) -> str:
-        return cls._get_permission("upload")
-
-    @classproperty
-    def Download(cls) -> str:
-        return cls._get_permission("download")

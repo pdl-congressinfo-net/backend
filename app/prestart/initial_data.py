@@ -21,7 +21,7 @@ from app.core.config import settings
 from app.core.db import engine
 from app.core.security import get_password_hash
 from app.features.events.model import EventType
-from app.features.locations.model import Country
+from app.features.locations.model import Country, LocationType
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role, RolePermission
 from app.features.users.model import User, UserRole
@@ -57,6 +57,7 @@ def load_country_data():
             session.commit()
     logger.info("Country data loaded successfully")
     return
+
 
 def load_event_type_data():
     """Load initial event type data into the database."""
@@ -111,9 +112,33 @@ def load_event_type_data():
     return
 
 
+def create_location_types():
+    logger.info("Loading initial event types")
+    event_types = [
+        {"code": "WEB", "name": "Webinar"},
+        {"code": "SIT", "name": "On Site"},
+    ]
+    with Session(engine) as session:
+        existing_location_types = session.exec(select(LocationType)).first()
+        if existing_location_types:
+            logger.info("Location type data already exists, skipping initialization")
+            return
+
+        for location_type_data in event_types:
+            location_type = LocationType(
+                code=location_type_data["code"],
+                name=location_type_data["name"],
+            )
+            session.add(location_type)
+        session.commit()
+    logger.info("Location type data loaded successfully")
+    return
+
+
 def create_initial_data():
     load_country_data()
     load_event_type_data()
+    create_location_types()
     # Create a session from the SessionLocal factory
     logger.info("Creating session for initial data seeding")
     with Session(engine) as session:

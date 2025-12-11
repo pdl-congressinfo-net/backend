@@ -1,9 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
+
+from sqlmodel import Field, Relationship, SQLModel
 
 from app.features.locations.model import Location
-from sqlmodel import Field, Relationship, SQLModel
+
 
 class EventType(SQLModel, table=True):
     __tablename__ = "event_types"
@@ -28,7 +30,7 @@ class Event(SQLModel, table=True):
     start_date: datetime
     end_date: datetime
     is_public: bool = Field(default=False)
-    
+
     location_id: Optional[str] = Field(default=None, foreign_key="locations.id")  # noqa: UP045
     event_type_id: Optional[str] = Field(default=None, foreign_key="event_types.id")  # noqa: UP045
 
