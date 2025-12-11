@@ -14,6 +14,61 @@ roles_router = APIRouter()
 
 
 # =========================
+# ROLE PERMISSION ENDPOINTS
+# =========================
+@roles_router.get("/permissions", response_model=list[schema.RolePermissionRead])
+async def list_role_permissions(
+    response: Response,
+    pagination: PaginationParams = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.List)),
+):
+    """List all role permissions."""
+    results, total = service.list_role_permissions(db, pagination)
+    return refine_list_response(response, results, total)
+
+
+@roles_router.get("/permissions/{role_id}")
+async def get_role_permissions(
+    role_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.Show)),
+):
+    """Get permissions for a specific role."""
+    permissions = service.get_role_permissions(db, role_id)
+    return ApiResponse(data=permissions)
+
+
+@roles_router.post(
+    "/permissions", response_model=ApiResponse[schema.RolePermissionRead]
+)
+async def create_role_permission(
+    role_permission: schema.RolePermissionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.Create)),
+):
+    """Assign a permission to a role."""
+    db_role_permission = service.assign_role_permission(
+        db, role_permission.role_id, role_permission.permission_id
+    )
+    return ApiResponse(data=db_role_permission)
+
+
+@roles_router.delete(
+    "/permissions/{role_id}/{permission_id}", response_model=MessageResponse
+)
+async def delete_role_permission(
+    role_id: str,
+    permission_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(RolePermissions.Delete)),
+):
+    """Remove a permission from a role."""
+    service.remove_role_permission(db, role_id, permission_id)
+    return MessageResponse(message="Role permission deleted successfully")
+
+
+# =========================
 # ROLE ENDPOINTS
 # =========================
 @roles_router.get("", response_model=list[schema.RoleRead])
@@ -71,58 +126,3 @@ async def delete_role(
     """Delete a role."""
     service.delete_role(db, role_id)
     return MessageResponse(message="Role deleted successfully")
-
-
-# =========================
-# ROLE PERMISSION ENDPOINTS
-# =========================
-@roles_router.get("/permissions/all", response_model=list[schema.RolePermissionRead])
-async def list_role_permissions(
-    response: Response,
-    pagination: PaginationParams = Depends(),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.List)),
-):
-    """List all role permissions."""
-    results, total = service.list_role_permissions(db, pagination)
-    return refine_list_response(response, results, total)
-
-
-@roles_router.get("/{role_id}/permissions")
-async def get_role_permissions(
-    role_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Show)),
-):
-    """Get permissions for a specific role."""
-    permissions = service.get_role_permissions(db, role_id)
-    return ApiResponse(data=permissions)
-
-
-@roles_router.post(
-    "/permissions", response_model=ApiResponse[schema.RolePermissionRead]
-)
-async def create_role_permission(
-    role_permission: schema.RolePermissionCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Create)),
-):
-    """Assign a permission to a role."""
-    db_role_permission = service.assign_role_permission(
-        db, role_permission.role_id, role_permission.permission_id
-    )
-    return ApiResponse(data=db_role_permission)
-
-
-@roles_router.delete(
-    "/permissions/{role_id}/{permission_id}", response_model=MessageResponse
-)
-async def delete_role_permission(
-    role_id: str,
-    permission_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Delete)),
-):
-    """Remove a permission from a role."""
-    service.remove_role_permission(db, role_id, permission_id)
-    return MessageResponse(message="Role permission deleted successfully")
