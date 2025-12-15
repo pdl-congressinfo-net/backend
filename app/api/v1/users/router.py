@@ -136,7 +136,7 @@ async def list_contacts(
 
 
 @users_router.get(
-    "/contact/{contact_id}", response_model=ApiResponse[schema.ContactRead]
+    "/contacts/{contact_id}", response_model=ApiResponse[schema.ContactRead]
 )
 async def get_user_contact(
     contact_id: str,
@@ -147,7 +147,7 @@ async def get_user_contact(
     return ApiResponse(data=contact)
 
 
-@users_router.post("/contact", response_model=ApiResponse[schema.ContactRead])
+@users_router.post("/contacts", response_model=ApiResponse[schema.ContactRead])
 async def create_user_contact(
     user_id: str,
     payload: schema.ContactCreate,
@@ -159,7 +159,7 @@ async def create_user_contact(
 
 
 @users_router.patch(
-    "/contact/{contact_id}", response_model=ApiResponse[schema.ContactRead]
+    "/contacts/{contact_id}", response_model=ApiResponse[schema.ContactRead]
 )
 async def update_user_contact(
     contact_id: str,
@@ -171,7 +171,7 @@ async def update_user_contact(
     return ApiResponse(data=contact)
 
 
-@users_router.delete("/contact/{contact_id}", response_model=MessageResponse)
+@users_router.delete("/contacts/{contact_id}", response_model=MessageResponse)
 async def delete_user_contact(
     contact_id: str,
     db: Session = Depends(get_db),
