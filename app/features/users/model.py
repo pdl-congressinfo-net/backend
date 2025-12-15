@@ -35,7 +35,7 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     titles: str | None = Field(default=None)  # noqa: UP007
     first_name: str = Field()  # noqa: UP007
-    last_name: str = Field()  # noqa: UP007
+    last_name: str | None = Field(default=None)  # noqa: UP007
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: datetime | None = None  # noqa: UP007
