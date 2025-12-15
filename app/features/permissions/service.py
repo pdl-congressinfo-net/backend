@@ -28,6 +28,34 @@ def get_permission_by_name(db, name: str):
 
 
 def create_permission(db, payload: BaseModel):
+    """
+    Create either a single permission or a full resource with default actions.
+
+    If payload.name is provided: creates a single permission
+    If payload.resource_name is provided: creates all default actions (list, show, create, update, delete)
+    """
+    # Check if this is a resource creation (resource_name provided)
+    if hasattr(payload, "resource_name") and payload.resource_name:
+        resource_name = payload.resource_name
+        default_actions = ["list", "show", "create", "update", "delete"]
+        created_permissions = []
+
+        admin_role = get_role_by_name(db, "admin")
+
+        for action in default_actions:
+            permission_name = f"{resource_name}:{action}"
+            permission = Permission(name=permission_name)
+            created_permission = repo.create_permission(db, permission)
+            created_permissions.append(created_permission)
+
+            # Add to admin role
+            if admin_role:
+                add_permission_to_role(db, admin_role.id, created_permission.id)
+
+        # Return the first permission (could return all, but API expects single response)
+        return created_permissions[0] if created_permissions else None
+
+    # Standard single permission creation
     permission = Permission.model_validate(payload)
     created_permission = repo.create_permission(db, permission)
 
