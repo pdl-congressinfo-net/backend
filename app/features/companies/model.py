@@ -18,8 +18,9 @@ class Sponsoring(SQLModel, table=True):
     name: str
     value: float = Field(default=0.0)
 
-    employee_id: str | None = Field(default=None, foreign_key="company_employees.id")  # noqa: UP045
-    event_id: str | None = Field(default=None, foreign_key="events.id")  # noqa: UP045
+    employee_id: Optional[str] = Field(default=None, foreign_key="company_employees.id")  # noqa: UP045
+    event_id: Optional[str] = Field(default=None, foreign_key="events.id")  # noqa: UP045
+    company_id: Optional[str] = Field(default=None, foreign_key="companies.id")  # noqa: UP045
 
     events: Optional["Event"] = Relationship(back_populates="sponsorings")  # noqa: UP045
     employee: Optional["CompanyEmployee"] = Relationship(back_populates="sponsorings")
