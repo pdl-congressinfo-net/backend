@@ -43,7 +43,9 @@ class UserPermissionRead(UserPermissionBase):
 
 class UserBase(BaseModel):
     email: str
-    full_name: str | None = None
+    titles: str | None = None
+    first_name: str
+    last_name: str
 
 
 class UserCreate(UserBase):
@@ -57,7 +59,9 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     email: str | None = None
-    full_name: str | None = None
+    titles: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
     password: str | None = None
 
 
@@ -65,6 +69,7 @@ class UserRead(UserBase):
     id: str
     created_at: datetime
     last_login: datetime | None = None
+    oeak_id: int | None = None
 
     class Config:
         from_attributes = True
