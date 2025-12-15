@@ -145,10 +145,15 @@ def get_contact_by_user_id(db: Session, user_id: str) -> Contact | None:
     return db.query(Contact).filter(Contact.user_id == user_id).first()
 
 
+def list_contacts(db: Session, pagination: PaginationParams):
+    query = db.query(Contact)
+    return refine_query(query, Contact, pagination)
+
+
 def create_contact(
     db: Session,
     *,
-    user_id: str,
+    user_id: str | None = None,
     email: str,
     titles: str | None = None,
     first_name: str | None = None,
@@ -175,3 +180,8 @@ def update_contact(db: Session, contact: Contact, updates: dict) -> Contact:
     db.commit()
     db.refresh(contact)
     return contact
+
+
+def delete_contact(db: Session, contact: Contact) -> None:
+    db.delete(contact)
+    db.commit()

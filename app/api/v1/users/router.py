@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.users import schema
 from app.common.deps import get_db, require_permission
-from app.common.permissions import UserPermissions, UserRoles, Users
+from app.common.permissions import Contacts, UserPermissions, UserRoles, Users
 from app.common.refine import refine_list_response
 from app.common.responses import ApiResponse, MessageResponse
 from app.features.users import service
@@ -121,6 +121,64 @@ async def delete_user_permission(
     """Delete a user permission."""
     service.remove_user_permission(db, user_id, permission_id)
     return MessageResponse(message="User permission deleted successfully")
+
+
+# CONTACTS (nested under /users)
+@users_router.get("/contacts", response_model=list[schema.ContactRead])
+async def list_contacts(
+    response: Response,
+    pagination: PaginationParams = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Contacts.List)),
+):
+    results, total = service.list_contacts(db, pagination)
+    return refine_list_response(response, results, total)
+
+
+@users_router.get(
+    "/contact/{contact_id}", response_model=ApiResponse[schema.ContactRead]
+)
+async def get_user_contact(
+    contact_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Contacts.Show)),
+):
+    contact = service.get_user_contact(db, contact_id)
+    return ApiResponse(data=contact)
+
+
+@users_router.post("/contact", response_model=ApiResponse[schema.ContactRead])
+async def create_user_contact(
+    user_id: str,
+    payload: schema.ContactCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Contacts.Create)),
+):
+    contact = service.create_user_contact(db, payload)
+    return ApiResponse(data=contact)
+
+
+@users_router.patch(
+    "/contact/{contact_id}", response_model=ApiResponse[schema.ContactRead]
+)
+async def update_user_contact(
+    contact_id: str,
+    payload: schema.ContactUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Contacts.Update)),
+):
+    contact = service.update_user_contact(db, contact_id, payload)
+    return ApiResponse(data=contact)
+
+
+@users_router.delete("/contact/{contact_id}", response_model=MessageResponse)
+async def delete_user_contact(
+    contact_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Contacts.Delete)),
+):
+    service.delete_user_contact(db, contact_id)
+    return MessageResponse(message="Contact deleted successfully")
 
 
 @users_router.get("", response_model=list[schema.UserRead])

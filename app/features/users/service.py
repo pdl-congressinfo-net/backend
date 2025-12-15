@@ -14,7 +14,7 @@ from app.core.security import (
 )
 from app.features.roles import repo as role_repo
 from app.features.users import repo
-from app.features.users.model import User
+from app.features.users.model import Contact, User
 
 
 # =========================
@@ -150,7 +150,7 @@ def delete_user(db, user_id: str):
 
 def login_user(db, response: Response, payload: BaseModel):
     user = repo.get_user_by_email(db, payload.email)
-    if not user and not verify_password(payload.password, user.hashed_password):
+    if not user or not verify_password(payload.password, user.hashed_password):
         raise NotFoundError("Invalid email or password")
 
     access_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -194,3 +194,37 @@ def register_user(db, payload: BaseModel):
             last_name=contact_payload.get("last_name"),
             phone_number=contact_payload.get("phone_number"),
         )
+
+
+# =========================
+# CONTACT SERVICE
+# =========================
+def list_contacts(db, pagination):
+    return repo.list_contacts(db, pagination)
+
+
+def get_user_contact(db, contact_id: str):
+    contact = repo.get_contact_by_id(db, contact_id)
+    if not contact:
+        raise NotFoundError("Contact not found")
+    return contact
+
+
+def create_user_contact(db, payload: BaseModel):
+    contact = Contact.model_validate(payload)
+    contact = repo.create_contact(db, contact)
+
+
+def update_user_contact(db, contact_id: str, payload: BaseModel):
+    contact = repo.get_contact_by_id(db, contact_id)
+    if not contact:
+        raise NotFoundError("Contact not found")
+    updates = payload.model_dump(exclude_unset=True)
+    return repo.update_contact(db, contact, updates)
+
+
+def delete_user_contact(db, contact_id: str):
+    contact = repo.get_contact_by_id(db, contact_id)
+    if not contact:
+        return
+    repo.delete_contact(db, contact)
