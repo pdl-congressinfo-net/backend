@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role, RolePermission
-from app.features.users.model import User, UserPermission, UserRole
+from app.features.users.model import Contact, User, UserPermission, UserRole
 from app.utils.pagination import PaginationParams
 from app.utils.refine_query import refine_query
 
@@ -132,3 +132,46 @@ def update_user(db: Session, user: User, updates: dict):
 def delete_user(db: Session, user: User):
     db.delete(user)
     db.commit()
+
+
+# =========================
+# CONTACT REPO
+# =========================
+def get_contact_by_id(db: Session, contact_id: str) -> Contact | None:
+    return db.query(Contact).filter(Contact.id == contact_id).first()
+
+
+def get_contact_by_user_id(db: Session, user_id: str) -> Contact | None:
+    return db.query(Contact).filter(Contact.user_id == user_id).first()
+
+
+def create_contact(
+    db: Session,
+    *,
+    user_id: str,
+    email: str,
+    titles: str | None = None,
+    first_name: str | None = None,
+    last_name: str | None = None,
+    phone_number: str | None = None,
+) -> Contact:
+    contact = Contact(
+        user_id=user_id,
+        email=email,
+        titles=titles,
+        first_name=first_name or "",
+        last_name=last_name,
+        phone_number=phone_number,
+    )
+    db.add(contact)
+    db.commit()
+    db.refresh(contact)
+    return contact
+
+
+def update_contact(db: Session, contact: Contact, updates: dict) -> Contact:
+    for key, value in updates.items():
+        setattr(contact, key, value)
+    db.commit()
+    db.refresh(contact)
+    return contact

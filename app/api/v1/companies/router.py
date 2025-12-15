@@ -74,6 +74,67 @@ async def delete_company(
 
 
 # =========================
+# SPONSORINGS ENDPOINTS
+# =========================
+@companies_router.get("/sponsorings", response_model=list[schema.SponsoringRead])
+async def list_sponsorings(
+    response: Response,
+    pagination: PaginationParams = Depends(),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Companies.List)),
+):
+    results, total = service.list_sponsorings(db, pagination)
+    return refine_list_response(response, results, total)
+
+
+@companies_router.get(
+    "/sponsorings/{sponsoring_id}", response_model=ApiResponse[schema.SponsoringRead]
+)
+async def get_sponsoring(
+    sponsoring_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Companies.Show)),
+):
+    sponsoring = service.get_sponsoring(db, sponsoring_id)
+    return ApiResponse(data=sponsoring)
+
+
+@companies_router.post(
+    "/sponsorings", response_model=ApiResponse[schema.SponsoringRead]
+)
+async def create_sponsoring(
+    sponsoring: schema.SponsoringCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Companies.Create)),
+):
+    sponsoring = service.create_sponsoring(db, sponsoring)
+    return ApiResponse(data=sponsoring)
+
+
+@companies_router.patch(
+    "/sponsorings/{sponsoring_id}", response_model=ApiResponse[schema.SponsoringRead]
+)
+async def update_sponsoring(
+    sponsoring_id: str,
+    sponsoring: schema.SponsoringUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Companies.Update)),
+):
+    sponsoring = service.update_sponsoring(db, sponsoring_id, sponsoring)
+    return ApiResponse(data=sponsoring)
+
+
+@companies_router.delete("/sponsorings/{sponsoring_id}", response_model=MessageResponse)
+async def delete_sponsoring(
+    sponsoring_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Companies.Delete)),
+):
+    service.delete_sponsoring(db, sponsoring_id)
+    return MessageResponse(message="Sponsoring deleted successfully")
+
+
+# =========================
 # COMPANY EMPLOYEE ENDPOINTS
 # =========================
 @companies_router.get("/employees", response_model=list[schema.CompanyEmployeeRead])

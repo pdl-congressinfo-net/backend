@@ -135,6 +135,17 @@ async def list_users(
     return refine_list_response(response, users, total)
 
 
+@users_router.post("", response_model=ApiResponse[schema.UserRead])
+async def create_user(
+    user_create: schema.UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission(Users.Create)),
+):
+    """Create a new user with optional contact info."""
+    user = service.create_user(db, user_create)
+    return ApiResponse(data=user)
+
+
 @users_router.get("/{user_id}", response_model=ApiResponse[schema.UserRead])
 async def get_user(
     user_id: str,

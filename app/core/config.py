@@ -18,7 +18,6 @@ class Settings(BaseSettings):
         for origin in os.getenv("BACKEND_CORS_ORIGINS", "").split(",")
         if origin.strip()
     ]
-    print(all_cors_origins)
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
@@ -28,6 +27,15 @@ class Settings(BaseSettings):
         port = os.getenv("MYSQL_PORT", "3306")
         database = os.getenv("MYSQL_DB", "")
         # For MariaDB 10.5+, use mariadb connector
+        return f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}?charset=utf8mb4"
+
+    @property
+    def OLD_SQLALCHEMY_DATABASE_URI(self) -> str:
+        user = os.getenv("MYSQL_USER", "")
+        password = os.getenv("MYSQL_PASSWORD", "")
+        host = os.getenv("MYSQL_SERVER", "")
+        port = os.getenv("MYSQL_PORT", "3306")
+        database = os.getenv("OLD_MYSQL_DB", "")
         return f"mysql+pymysql://{user}:{password}@{host}:{port}/{database}?charset=utf8mb4"
 
     FILE_UPLOAD_DIR: str = os.getenv("FILE_UPLOAD_DIR", "./files")

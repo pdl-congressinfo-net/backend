@@ -110,3 +110,7 @@ class Companies(Permission, resource="companies"):
 
 class CompanyEmployees(Permission, resource="companyemployees"):
     pass
+
+
+class Contacts(Permission, resource="contacts"):
+    pass

@@ -41,15 +41,40 @@ class UserPermissionRead(UserPermissionBase):
         from_attributes = True
 
 
-class UserBase(BaseModel):
-    email: str
+class ContactBase(BaseModel):
     titles: str | None = None
     first_name: str
     last_name: str | None = None
+    phone_number: str | None = None
+
+
+class ContactCreate(ContactBase):
+    pass
+
+
+class ContactUpdate(BaseModel):
+    titles: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    phone_number: str | None = None
+
+
+class ContactRead(ContactBase):
+    id: str | None = None
+    email: str | None = None
+    created_at: datetime | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserBase(BaseModel):
+    email: str
 
 
 class UserCreate(UserBase):
     password: str
+    contact: ContactCreate | None = None
 
 
 class UserLogin(BaseModel):
@@ -59,10 +84,8 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     email: str | None = None
-    titles: str | None = None
-    first_name: str | None = None
-    last_name: str | None = None
     password: str | None = None
+    contact: ContactUpdate | None = None
 
 
 class UserRead(UserBase):
@@ -70,6 +93,7 @@ class UserRead(UserBase):
     created_at: datetime
     last_login: datetime | None = None
     oeak_id: int | None = None
+    contact: ContactRead | None = None
 
     class Config:
         from_attributes = True

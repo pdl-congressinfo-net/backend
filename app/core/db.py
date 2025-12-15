@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.pool import QueuePool
+from sqlalchemy.pool import NullPool, QueuePool
 
 from app.core.config import settings
 from app.features.companies.model import Company, CompanyEmployee  # noqa: F401
@@ -25,5 +25,17 @@ engine = create_engine(
         "connect_timeout": 10,  # Connection timeout in seconds
         "read_timeout": 30,  # Read timeout in seconds
         "write_timeout": 30,  # Write timeout in seconds
+    },
+)
+
+_old_db_uri = getattr(settings, "OLD_SQLALCHEMY_DATABASE_URI", None)
+old_engine = create_engine(
+    _old_db_uri,
+    echo=False,
+    poolclass=NullPool,  # do not maintain a connection pool
+    pool_pre_ping=True,
+    connect_args={
+        "connect_timeout": 10,
+        "read_timeout": 30,
     },
 )

@@ -94,8 +94,23 @@ def get_user_by_email(db, email: str):
 
 
 def create_user(db, payload: BaseModel):
-    user = User.model_validate(payload)
-    return repo.create_user(db, user)
+    data = payload.model_dump()
+    contact_payload = data.pop("contact", None)
+    user = User.model_validate(data)
+    user = repo.create_user(db, user)
+
+    # Create linked contact if provided
+    if contact_payload:
+        repo.create_contact(
+            db,
+            user_id=user.id,
+            email=user.email,
+            titles=contact_payload.get("titles"),
+            first_name=contact_payload.get("first_name"),
+            last_name=contact_payload.get("last_name"),
+            phone_number=contact_payload.get("phone_number"),
+        )
+    return user
 
 
 def update_user(db, user_id: str, payload: BaseModel):
@@ -104,7 +119,26 @@ def update_user(db, user_id: str, payload: BaseModel):
         raise NotFoundError("User not found")
 
     updates = payload.model_dump(exclude_unset=True)
-    return repo.update_user(db, user, updates)
+    contact_updates = updates.pop("contact", None)
+    updated_user = repo.update_user(db, user, updates) if updates else user
+
+    if contact_updates is not None:
+        # Ensure a contact exists, then update it
+        contact = repo.get_contact_by_user_id(db, user.id)
+        if contact:
+            repo.update_contact(db, contact, contact_updates)
+        else:
+            repo.create_contact(
+                db,
+                user_id=user.id,
+                email=user.email,
+                titles=contact_updates.get("titles"),
+                first_name=contact_updates.get("first_name"),
+                last_name=contact_updates.get("last_name"),
+                phone_number=contact_updates.get("phone_number"),
+            )
+
+    return updated_user
 
 
 def delete_user(db, user_id: str):
@@ -142,9 +176,21 @@ def register_user(db, payload: BaseModel):
 
     # Create user data dict with hashed password
     user_data = payload.model_dump(exclude={"password"})
+    contact_payload = user_data.pop("contact", None)
     user_data["hashed_password"] = hashed_password
 
     user = User.model_validate(user_data)
     user = repo.create_user(db, user)
 
     repo.add_default_role_to_user(db, user.id)
+
+    if contact_payload:
+        repo.create_contact(
+            db,
+            user_id=user.id,
+            email=user.email,
+            titles=contact_payload.get("titles"),
+            first_name=contact_payload.get("first_name"),
+            last_name=contact_payload.get("last_name"),
+            phone_number=contact_payload.get("phone_number"),
+        )

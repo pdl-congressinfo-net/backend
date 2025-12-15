@@ -2,6 +2,36 @@ from pydantic import BaseModel
 
 
 # =========================
+# SPONSORING SCHEMAS
+# =========================
+class SponsoringBase(BaseModel):
+    name: str
+    value: float | None = 0.0
+    employee_id: str | None = None
+    contact_id: str | None = None
+    event_id: str | None = None
+
+
+class SponsoringCreate(SponsoringBase):
+    pass
+
+
+class SponsoringUpdate(BaseModel):
+    name: str | None = None
+    value: float | None = None
+    employee_id: str | None = None
+    contact_id: str | None = None
+    event_id: str | None = None
+
+
+class SponsoringRead(SponsoringBase):
+    id: str
+
+    class Config:
+        from_attributes = True
+
+
+# =========================
 # COMPANY SCHEMAS
 # =========================
 class CompanyBase(BaseModel):
@@ -33,7 +63,7 @@ class CompanyRead(CompanyBase):
 class CompanyEmployeeBase(BaseModel):
     departement: str | None = None
     function: str | None = None
-    user_id: str | None = None
+    contact_id: str | None = None
     company_id: str | None = None
 
 
@@ -44,7 +74,7 @@ class CompanyEmployeeCreate(CompanyEmployeeBase):
 class CompanyEmployeeUpdate(BaseModel):
     departement: str | None = None
     function: str | None = None
-    user_id: str | None = None
+    contact_id: str | None = None
     company_id: str | None = None
 
 

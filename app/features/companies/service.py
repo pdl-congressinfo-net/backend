@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 from app.common.exceptions import NotFoundError
 from app.features.companies import repo
-from app.features.companies.model import Company, CompanyEmployee
+from app.features.companies.model import Company, CompanyEmployee, Sponsoring
 
 
 # =========================
@@ -73,3 +73,37 @@ def delete_company_employee(db, employee_id: str):
     if not employee:
         raise NotFoundError("Company employee not found")
     repo.delete_company_employee(db, employee)
+
+
+# =========================
+# SPONSORING SERVICE
+# =========================
+def list_sponsorings(db, pagination):
+    return repo.list_sponsorings(db, pagination)
+
+
+def get_sponsoring(db, sponsoring_id: str):
+    sponsoring = repo.get_sponsoring_by_id(db, sponsoring_id)
+    if not sponsoring:
+        raise NotFoundError("Sponsoring not found")
+    return sponsoring
+
+
+def create_sponsoring(db, payload: BaseModel):
+    sponsoring = Sponsoring.model_validate(payload)
+    return repo.create_sponsoring(db, sponsoring)
+
+
+def update_sponsoring(db, sponsoring_id: str, payload: BaseModel):
+    sponsoring = repo.get_sponsoring_by_id(db, sponsoring_id)
+    if not sponsoring:
+        raise NotFoundError("Sponsoring not found")
+    updates = payload.model_dump(exclude_unset=True)
+    return repo.update_sponsoring(db, sponsoring, updates)
+
+
+def delete_sponsoring(db, sponsoring_id: str):
+    sponsoring = repo.get_sponsoring_by_id(db, sponsoring_id)
+    if not sponsoring:
+        raise NotFoundError("Sponsoring not found")
+    repo.delete_sponsoring(db, sponsoring)

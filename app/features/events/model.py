@@ -1,10 +1,12 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
-from app.features.locations.model import Location
+if TYPE_CHECKING:
+    from app.features.companies.model import Sponsoring
+    from app.features.locations.model import Location
 
 
 class EventType(SQLModel, table=True):
@@ -32,3 +34,4 @@ class Event(SQLModel, table=True):
 
     event_type: Optional["EventType"] = Relationship(back_populates="events")
     location: Optional["Location"] = Relationship(back_populates="events")
+    sponsorings: List["Sponsoring"] = Relationship(back_populates="events")  # noqa: UP006
