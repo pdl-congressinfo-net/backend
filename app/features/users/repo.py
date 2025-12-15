@@ -20,6 +20,14 @@ def get_roles_by_user_id(db: Session, user_id: str):
     return db.query(UserRole).filter(UserRole.user_id == user_id).all()
 
 
+def add_default_role_to_user(db: Session, user_id: str):
+    default_role = db.query(Role).filter(Role.is_default == True).first()
+
+    if default_role:
+        return add_role_to_user(db, user_id, default_role.id)
+    raise RuntimeError("No default role configured")
+
+
 def add_role_to_user(db: Session, user_id: str, role_id: str):
     user_role = UserRole(user_id=user_id, role_id=role_id)
     db.add(user_role)

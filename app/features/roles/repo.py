@@ -37,6 +37,8 @@ def update_role(db: Session, role: Role, updates: dict):
 
 
 def delete_role(db: Session, role: Role):
+    if role.is_default:
+        raise ValueError("Cannot delete the default role")
     db.delete(role)
     db.commit()
 

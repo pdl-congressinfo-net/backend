@@ -140,6 +140,11 @@ def register_user(db, payload: BaseModel):
 
     hashed_password = get_password_hash(payload.password)
 
-    user = User.model_validate(payload)
-    user.hashed_password = hashed_password
-    return repo.create_user(db, user)
+    # Create user data dict with hashed password
+    user_data = payload.model_dump(exclude={"password"})
+    user_data["hashed_password"] = hashed_password
+
+    user = User.model_validate(user_data)
+    user = repo.create_user(db, user)
+
+    repo.add_default_role_to_user(db, user.id)
