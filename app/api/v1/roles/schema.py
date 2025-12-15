@@ -6,6 +6,7 @@ from pydantic import BaseModel
 # =========================
 class RoleBase(BaseModel):
     name: str
+    is_default: bool = False
 
 
 class RoleCreate(RoleBase):
@@ -14,6 +15,7 @@ class RoleCreate(RoleBase):
 
 class RoleUpdate(BaseModel):
     name: str | None = None
+    is_default: bool | None = None
 
 
 class RoleRead(RoleBase):
