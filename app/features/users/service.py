@@ -1,6 +1,17 @@
+from datetime import datetime, timedelta
+
+from fastapi import Response
 from pydantic import BaseModel
 
 from app.common.exceptions import NotFoundError
+from app.core.config import settings
+from app.core.security import (
+    create_access_token,
+    get_password_hash,
+    set_refresh_cookie,
+    set_split_jwt_cookies,
+    verify_password,
+)
 from app.features.roles import repo as role_repo
 from app.features.users import repo
 from app.features.users.model import User
@@ -101,3 +112,34 @@ def delete_user(db, user_id: str):
     if not user:
         raise NotFoundError("User not found")
     repo.delete_user(db, user)
+
+
+def login_user(db, response: Response, payload: BaseModel):
+    user = repo.get_user_by_email(db, payload.email)
+    if not user and not verify_password(payload.password, user.hashed_password):
+        raise NotFoundError("Invalid email or password")
+
+    access_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    refresh_expires = timedelta(days=7)
+
+    access_token = create_access_token({"sub": payload.email}, access_expires)
+    refresh_token = create_access_token({"sub": payload.email}, refresh_expires)
+
+    set_split_jwt_cookies(response, access_token)
+    set_refresh_cookie(response, refresh_token)
+
+    repo.update_user(db, user, {"last_login": datetime.utcnow()})
+
+    return user
+
+
+def register_user(db, payload: BaseModel):
+    user = repo.get_user_by_email(db, payload.email)
+    if user:
+        raise NotFoundError("User with this email already exists")
+
+    hashed_password = get_password_hash(payload.password)
+
+    user = User.model_validate(payload)
+    user.hashed_password = hashed_password
+    return repo.create_user(db, user)

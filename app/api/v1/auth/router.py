@@ -14,17 +14,15 @@ from app.common.deps import (
     get_current_user,
     get_db,
 )
-from app.core.config import settings
 from app.core.security import (
     create_access_token,
     create_magic_link,
     decode_magic_token,
     generate_otp,
-    get_password_hash,
     set_refresh_cookie,
     set_split_jwt_cookies,
-    verify_password,
 )
+from app.features.users import service
 from app.features.users.model import LoginOTP, User
 from app.features.users.service import get_user_permissions, list_guest_permissions
 from app.integrations.mail.mail import send_email
@@ -35,20 +33,8 @@ auth_router = APIRouter()
 @auth_router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_user(user_create: UserCreate, db: Session = Depends(get_db)):
     """User registration endpoint"""
-    existing_user = db.query(User).filter(User.email == user_create.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
-        )
+    service.register_user(db, user_create)
 
-    new_user = User(
-        email=user_create.email,
-        full_name=user_create.full_name,
-        hashed_password=get_password_hash(user_create.password),
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
     return {"detail": "User registered successfully"}
 
 
@@ -57,23 +43,7 @@ async def login_user(
     response: Response, user_login: UserLogin, db: Session = Depends(get_db)
 ):
     """User login endpoint"""
-    user = db.query(User).filter(User.email == user_login.email).first()
-    if not user or not verify_password(user_login.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
-        )
-
-    access_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    refresh_expires = timedelta(days=7)
-
-    access_token = create_access_token({"sub": user_login.email}, access_expires)
-    refresh_token = create_access_token({"sub": user_login.email}, refresh_expires)
-
-    set_split_jwt_cookies(response, access_token)
-    set_refresh_cookie(response, refresh_token)
-
-    user.last_login = datetime.utcnow()
-    db.commit()
+    service.login_user(db, response, user_login)
 
     return {"detail": "Login successful"}
 
