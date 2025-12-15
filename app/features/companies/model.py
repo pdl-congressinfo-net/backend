@@ -4,7 +4,7 @@ from typing import List, Optional
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.features.locations.model import Location
-from app.features.users.model import User
+from app.features.users.model import Contact
 
 
 class CompanyEmployee(SQLModel, table=True):
@@ -16,11 +16,11 @@ class CompanyEmployee(SQLModel, table=True):
     departement: Optional[str] = None  # noqa: UP045
     function: Optional[str] = None  # noqa: UP045
 
-    user_id: Optional[str] = Field(default=None, foreign_key="users.id")  # noqa: UP045
+    contact_id: Optional[str] = Field(default=None, foreign_key="contacts.id")  # noqa: UP045
     company_id: Optional[str] = Field(default=None, foreign_key="companies.id")  # noqa: UP045
 
     company: Optional["Company"] = Relationship(back_populates="employees")
-    user: Optional["User"] = Relationship(back_populates="company_employee")
+    contact: Optional["Contact"] = Relationship(back_populates="company_employee")
 
 
 class Company(SQLModel, table=True):

@@ -25,7 +25,24 @@ class UserPermission(SQLModel, table=True):
     )
 
 
-# Main models
+class Contact(SQLModel, table=True):
+    __tablename__ = "contacts"
+
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
+    )
+    email: str = Field(index=True, unique=True)
+    titles: str | None = Field(default=None)  # noqa: UP007
+    first_name: str  # noqa: UP007
+    last_name: str | None = Field(default=None)  # noqa: UP007
+    phone_number: str | None = Field(default=None)
+
+    user_id: str | None = Field(foreign_key="users.id", index=True, nullable=True)
+    user: Optional["User"] = Relationship(back_populates="contact")
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class User(SQLModel, table=True):
     __tablename__ = "users"
 
@@ -33,9 +50,6 @@ class User(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     email: str = Field(unique=True, index=True)
-    titles: str | None = Field(default=None)  # noqa: UP007
-    first_name: str = Field()  # noqa: UP007
-    last_name: str | None = Field(default=None)  # noqa: UP007
     hashed_password: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: datetime | None = None  # noqa: UP007
@@ -48,6 +62,7 @@ class User(SQLModel, table=True):
     )
     login_otps: list["LoginOTP"] = Relationship(back_populates="user")
     company_employee: Optional["CompanyEmployee"] = Relationship(back_populates="user")  # noqa: UP006
+    contact: Optional["Contact"] = Relationship(back_populates="user")  # noqa: UP006
 
 
 class LoginOTP(SQLModel, table=True):
