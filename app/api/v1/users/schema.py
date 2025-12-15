@@ -45,7 +45,7 @@ class UserBase(BaseModel):
     email: str
     titles: str | None = None
     first_name: str
-    last_name: str
+    last_name: str | None = None
 
 
 class UserCreate(UserBase):
