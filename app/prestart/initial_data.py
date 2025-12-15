@@ -62,49 +62,17 @@ def load_country_data():
 def load_event_type_data():
     """Load initial event type data into the database."""
     logger.info("Loading initial event type data")
-    event_types = [
-        {
-            "code": "CON",
-            "name_de": "Konferenz",
-            "name_en": "Conference",
-            "description_de": "Eine formelle Versammlung von Personen mit gemeinsamen Interessen.",
-            "description_en": "A formal gathering of people with shared interests.",
-        },
-        {
-            "code": "WOR",
-            "name_de": "Workshop",
-            "name_en": "Workshop",
-            "description_de": "Eine interaktive Sitzung zur Vermittlung von Fähigkeiten oder Wissen.",
-            "description_en": "An interactive session for skill or knowledge transfer.",
-        },
-        {
-            "code": "SEM",
-            "name_de": "Seminar",
-            "name_en": "Seminar",
-            "description_de": "Eine akademische Veranstaltung zur Diskussion eines bestimmten Themas.",
-            "description_en": "An academic event for discussing a specific topic.",
-        },
-        {
-            "code": "WEB",
-            "name_de": "Webinar",
-            "name_en": "Webinar",
-            "description_de": "Ein Online-Seminar, das über das Internet abgehalten wird.",
-            "description_en": "An online seminar conducted over the internet.",
-        },
-    ]
+    event_types = ["CON", "WKS", "SEM", "WEB"]
+
     with Session(engine) as session:
         existing_event_types = session.exec(select(EventType)).first()
         if existing_event_types:
             logger.info("Event type data already exists, skipping initialization")
             return
 
-        for event_type_data in event_types:
+        for event_type_code in event_types:
             event_type = EventType(
-                code=event_type_data["code"],
-                name_de=event_type_data["name_de"],
-                name_en=event_type_data["name_en"],
-                description_de=event_type_data["description_de"],
-                description_en=event_type_data["description_en"],
+                code=event_type_code,
             )
             session.add(event_type)
         session.commit()
