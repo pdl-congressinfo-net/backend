@@ -25,6 +25,7 @@ class Role(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     name: str = Field(unique=True, index=True)
+    is_default: bool = Field(default=False, index=True)
 
     # Relationships
     permissions: list["Permission"] = Relationship(
