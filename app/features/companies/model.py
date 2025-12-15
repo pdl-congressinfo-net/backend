@@ -23,7 +23,9 @@ class Sponsoring(SQLModel, table=True):
     company_id: Optional[str] = Field(default=None, foreign_key="companies.id")  # noqa: UP045
 
     events: Optional["Event"] = Relationship(back_populates="sponsorings")  # noqa: UP045
-    employee: Optional["CompanyEmployee"] = Relationship(back_populates="sponsorings")
+    company_employee: Optional["CompanyEmployee"] = Relationship(
+        back_populates="sponsorings"
+    )
     company: Optional["Company"] = Relationship(back_populates="sponsorings")
 
 
@@ -41,7 +43,7 @@ class CompanyEmployee(SQLModel, table=True):
 
     company: Optional["Company"] = Relationship(back_populates="employees")
     contact: Optional["Contact"] = Relationship(back_populates="company_employee")
-    sponsorings: List["Sponsoring"] = Relationship(back_populates="employee")  # noqa: UP006
+    sponsorings: List["Sponsoring"] = Relationship(back_populates="company_employee")  # noqa: UP006
 
 
 class Company(SQLModel, table=True):

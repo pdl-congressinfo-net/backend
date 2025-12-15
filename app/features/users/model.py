@@ -42,6 +42,10 @@ class Contact(SQLModel, table=True):
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+    company_employee: Optional["CompanyEmployee"] = Relationship(
+        back_populates="contact"
+    )
+
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
@@ -61,7 +65,6 @@ class User(SQLModel, table=True):
         back_populates="users", link_model=UserPermission
     )
     login_otps: list["LoginOTP"] = Relationship(back_populates="user")
-    company_employee: Optional["CompanyEmployee"] = Relationship(back_populates="user")  # noqa: UP006
     contact: Optional["Contact"] = Relationship(back_populates="user")  # noqa: UP006
 
 
