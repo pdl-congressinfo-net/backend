@@ -5,10 +5,10 @@ from sqlalchemy import (
     Date,
     Float,
     Integer,
-    and_,
     asc,
     cast,
     desc,
+    or_,
 )
 from sqlalchemy.orm import Query as SAQuery
 
@@ -142,7 +142,7 @@ def apply_filters(query, model, filters):
             query = query.filter(expr)
         else:
             conditions = [build_expression(col, op, val) for col, val in items]
-            query = query.filter(and_(*conditions))
+            query = query.filter(or_(*conditions))
 
     return query
 
