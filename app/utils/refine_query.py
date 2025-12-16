@@ -43,6 +43,11 @@ def convert_value(column, value):
     except Exception:
         pass
 
+    # Check if column has a type attribute (regular columns)
+    # Relationships don't have .type, so skip type-based conversions
+    if not hasattr(column, 'type'):
+        return value
+
     # Int
     if isinstance(column.type, Integer):
         try:
@@ -120,15 +125,26 @@ def build_expression(column, op, value):
 def apply_filters(query, model, filters):
     grouped = {}  # { "gte": [(column, value), ...] }
 
+    # Known operators that can be used as suffixes
+    known_operators = {"gte", "lte", "gt", "lt", "eq", "ne", "contains", "like", "in"}
+
     for raw_field, value in filters.items():
-        # Parse operator
+        # Parse operator - only split if the suffix is a known operator
+        op = "eq"  # default
+        field = raw_field
+
         if "_" in raw_field:
-            field, op = raw_field.rsplit("_", 1)
-        else:
-            field, op = raw_field, "eq"
+            potential_field, potential_op = raw_field.rsplit("_", 1)
+            if potential_op in known_operators:
+                field = potential_field
+                op = potential_op
 
         if not hasattr(model, field):
             continue
+
+        # If value is a list and operator is 'eq', change to 'in' operator
+        if isinstance(value, list) and op == "eq":
+            op = "in"
 
         column = getattr(model, field)
         converted_value = convert_value(column, value)

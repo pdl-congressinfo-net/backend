@@ -45,8 +45,23 @@ class PaginationParams:
                 for field, order in zip(sort_fields, order_values)
             ]
 
-        self.filters = request.query_params.multi_items()
-        self.filters = dict(self.filters)
+        # Handle multiple values for the same parameter
+        # multi_items() returns list of (key, value) tuples
+        multi_items = request.query_params.multi_items()
+
+        # Group values by key to handle multiple values for same parameter
+        filters_dict = {}
+        for key, value in multi_items:
+            if key in filters_dict:
+                # If key already exists, convert to list or append to list
+                if isinstance(filters_dict[key], list):
+                    filters_dict[key].append(value)
+                else:
+                    filters_dict[key] = [filters_dict[key], value]
+            else:
+                filters_dict[key] = value
+
+        self.filters = filters_dict
 
         for key in ["_start", "_end", "_sort", "_order", "currentPage", "pageSize"]:
             self.filters.pop(key, None)
