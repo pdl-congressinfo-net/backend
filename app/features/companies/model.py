@@ -53,6 +53,7 @@ class Company(SQLModel, table=True):
         default_factory=lambda: str(uuid.uuid4()), primary_key=True, max_length=36
     )
     name: str = Field(unique=True, index=True)
+    short_name: Optional[str] = None  # noqa: UP045
     sponsoring: bool = Field(default=False)
     location_id: Optional[str] = Field(default=None, foreign_key="locations.id")  # noqa: UP045
 
