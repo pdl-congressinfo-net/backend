@@ -147,10 +147,27 @@ def apply_filters(query, model, filters):
     return query
 
 
-def apply_sorting(query: SAQuery, model, sort: str | None, order: str):
-    if sort and hasattr(model, sort):
-        col = getattr(model, sort)
-        return query.order_by(desc(col) if order == "DESC" else asc(col))
+def apply_sorting(query: SAQuery, model, sorts: list[dict]):
+    """
+    Apply multiple sorts to the query.
+    sorts: list of dicts with 'field' and 'order' keys
+    Example: [{'field': 'first_name', 'order': 'DESC'}, {'field': 'last_name', 'order': 'ASC'}]
+    """
+    if not sorts:
+        return query
+
+    order_clauses = []
+    for sort_item in sorts:
+        field = sort_item.get("field")
+        order = sort_item.get("order", "ASC")
+
+        if field and hasattr(model, field):
+            col = getattr(model, field)
+            order_clauses.append(desc(col) if order == "DESC" else asc(col))
+
+    if order_clauses:
+        return query.order_by(*order_clauses)
+
     return query
 
 
@@ -162,7 +179,7 @@ def refine_query(query: SAQuery, model, params):
     filtered = apply_filters(query, model, params.filters)
     total = filtered.count()
 
-    sorted_query = apply_sorting(filtered, model, params.sort, params.order)
+    sorted_query = apply_sorting(filtered, model, params.sorts)
     paginated = apply_pagination(sorted_query, params.start, params.limit)
 
     return paginated.all(), total

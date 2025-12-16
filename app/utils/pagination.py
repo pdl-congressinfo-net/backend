@@ -10,7 +10,7 @@ class PaginationParams:
         currentPage: int | None = Query(None, ge=1, alias="currentPage"),
         pageSize: int | None = Query(None, ge=1, alias="pageSize"),
         _sort: str | None = None,
-        _order: str = "ASC",
+        _order: str | None = None,
     ):
         # Support both formats: _start/_end and currentPage/pageSize
         if _start is not None and _end is not None:
@@ -29,8 +29,21 @@ class PaginationParams:
             self.end = 10
             self.limit = 10
 
-        self.sort = _sort
-        self.order = _order
+        # Parse comma-separated sort fields and orders
+        # Format: _sort=first_name,last_name&_order=DESC,ASC
+        self.sorts = []
+        if _sort:
+            sort_fields = _sort.split(",")
+            order_values = _order.split(",") if _order else []
+
+            # Pad orders with "ASC" if not enough provided
+            while len(order_values) < len(sort_fields):
+                order_values.append("ASC")
+
+            self.sorts = [
+                {"field": field.strip(), "order": order.strip()}
+                for field, order in zip(sort_fields, order_values)
+            ]
 
         self.filters = request.query_params.multi_items()
         self.filters = dict(self.filters)
