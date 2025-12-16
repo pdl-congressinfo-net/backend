@@ -6,11 +6,6 @@ from pydantic.generics import GenericModel
 T = TypeVar("T")
 
 
-class ErrorResponse(BaseModel):
-    detail: str
-    code: str | None = None
-
-
 class MessageResponse(BaseModel):
     message: str
 

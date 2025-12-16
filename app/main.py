@@ -3,6 +3,12 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api import api_router
+from app.common.exceptions import (
+    NotFoundError,
+    PermissionDenied,
+    not_found_handler,
+    permission_handler,
+)
 from app.core.config import settings
 
 
@@ -28,3 +34,6 @@ if settings.all_cors_origins:
     )
 
 app.include_router(api_router, prefix="/api")
+
+app.add_exception_handler(NotFoundError, not_found_handler)
+app.add_exception_handler(PermissionDenied, permission_handler)
