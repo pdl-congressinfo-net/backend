@@ -106,8 +106,8 @@ def build_expression(column, op, value):
         return column == value
     if op == "ne":
         return column != value
-    if op == "contains":
-        return column.ilike(f"%{value}%")
+    if op == "contains" or op == "like":
+        return column.like(f"%{value}%")
 
     if op == "in":
         if isinstance(value, str):
