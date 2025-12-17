@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
+from sqlalchemy import inspect
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
@@ -67,6 +68,24 @@ class User(SQLModel, table=True):
     object_permissions: list["ObjectPermission"] = Relationship(back_populates="user")
     login_otps: list["LoginOTP"] = Relationship(back_populates="user")
     contact: Optional["Contact"] = Relationship(back_populates="user")  # noqa: UP006
+
+    def _assert_roles_loaded(self) -> None:
+        state = inspect(self)
+        if "roles" in state.unloaded:
+            raise RuntimeError("User roles are not loaded")
+
+    def has_role(self, role_name: str) -> bool:
+        self._assert_roles_loaded()
+        return any(r.name == role_name for r in self.roles)
+
+    def _assert_permissions_loaded(self) -> None:
+        state = inspect(self)
+        if "permissions" in state.unloaded:
+            raise RuntimeError("User permissions are not loaded")
+
+    def has_permission(self, permission_name: str) -> bool:
+        self._assert_permissions_loaded()
+        return any(p.name == permission_name for p in self.permissions)
 
 
 class LoginOTP(SQLModel, table=True):
