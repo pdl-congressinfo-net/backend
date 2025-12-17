@@ -25,6 +25,10 @@ from app.features.locations.model import Country, LocationType
 from app.features.permissions.model import Permission
 from app.features.roles.model import Role, RolePermission
 from app.features.users.model import User, UserRole
+from app.prestart.initial.sponsors import (
+    load_sponsor_company_data,
+    load_sponsor_contact_data,
+)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -249,3 +253,5 @@ def create_initial_data():
 
 if __name__ == "__main__":
     create_initial_data()
+    load_sponsor_company_data()
+    load_sponsor_contact_data()
