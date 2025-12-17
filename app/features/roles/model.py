@@ -26,6 +26,7 @@ class Role(SQLModel, table=True):
     )
     name: str = Field(unique=True, index=True)
     is_default: bool = Field(default=False, index=True)
+    bypass_object_scope: bool = Field(default=False, index=True)
 
     # Relationships
     permissions: list["Permission"] = Relationship(

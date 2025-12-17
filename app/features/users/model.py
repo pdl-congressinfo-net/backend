@@ -6,7 +6,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from app.features.companies.model import CompanyEmployee
-    from app.features.permissions.model import Permission
+    from app.features.permissions.model import ObjectPermission, Permission
     from app.features.roles.model import Role
 
 
@@ -64,6 +64,7 @@ class User(SQLModel, table=True):
     permissions: list["Permission"] = Relationship(
         back_populates="users", link_model=UserPermission
     )
+    object_permissions: list["ObjectPermission"] = Relationship(back_populates="user")
     login_otps: list["LoginOTP"] = Relationship(back_populates="user")
     contact: Optional["Contact"] = Relationship(back_populates="user")  # noqa: UP006
 
