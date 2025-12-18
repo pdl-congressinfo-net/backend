@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import inspect
 from sqlmodel import Field, Relationship, SQLModel
 
+from app.core.config import settings
+
 if TYPE_CHECKING:
     from app.features.companies.model import CompanyEmployee
     from app.features.permissions.model import ObjectPermission, Permission
@@ -78,6 +80,13 @@ class User(SQLModel, table=True):
         self._assert_roles_loaded()
         return any(r.name == role_name for r in self.roles)
 
+    def can_bypass_object_scopes(self, resource: str, action: str) -> bool:
+        self._assert_roles_loaded()
+        if self.has_role(settings.SYSTEM_ADMIN_ROLE_NAME):
+            return True
+
+        return any(role.bypass_object_scope for role in self.roles)
+
     def _assert_permissions_loaded(self) -> None:
         state = inspect(self)
         if "permissions" in state.unloaded:
@@ -86,6 +95,22 @@ class User(SQLModel, table=True):
     def has_permission(self, permission_name: str) -> bool:
         self._assert_permissions_loaded()
         return any(p.name == permission_name for p in self.permissions)
+
+    def effective_permissions(self) -> list["Permission"]:
+        self._assert_permissions_loaded()
+        self._assert_roles_loaded()
+        perms: dict[str, Permission] = {}
+
+        # direct user permissions
+        for perm in self.permissions:
+            perms[perm.id] = perm
+
+        # role permissions
+        for role in self.roles:
+            for perm in role.permissions:
+                perms.setdefault(perm.id, perm)
+
+        return perms.values()
 
 
 class LoginOTP(SQLModel, table=True):

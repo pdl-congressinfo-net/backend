@@ -12,7 +12,6 @@ from app.core.security import (
     set_split_jwt_cookies,
     verify_password,
 )
-from app.features.roles import repo as role_repo
 from app.features.users import repo
 from app.features.users.model import Contact, User
 
@@ -50,15 +49,10 @@ def list_guest_permissions(db, request):
     return repo.list_guest_permissions(db, request)
 
 
-def get_user_permissions(db, user_id: str, include_roles: bool = False):
-    permissions = repo.get_permissions_by_user_id(db, user_id)
-    if include_roles:
-        roles = repo.get_roles_by_user_id(db, user_id)
-        user_roles = [role_repo.get_role_by_id(db, role.role_id) for role in roles]
-        print(user_roles)
-        for role in user_roles:
-            for perm in role.permissions:
-                permissions.append(perm)
+def get_user_permissions(db, user_id: str):
+    user = repo.get_user_by_id(db, user_id, True)
+    print(user.permissions)
+    permissions = user.effective_permissions()
     if not permissions:
         raise NotFoundError("User permissions not found")
     return permissions

@@ -28,19 +28,6 @@ async def list_permissions(
     return refine_list_response(response, results, total)
 
 
-@permissions_router.get(
-    "/{permission_id}", response_model=ApiResponse[schema.PermissionRead]
-)
-async def get_permission(
-    permission_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(Permissions.Show)),
-):
-    """Get a specific permission by ID."""
-    permission = service.get_permission(db, permission_id)
-    return ApiResponse(data=permission)
-
-
 @permissions_router.post("", response_model=ApiResponse[schema.PermissionRead])
 async def create_permission(
     permission: schema.PermissionCreate,
@@ -49,20 +36,6 @@ async def create_permission(
 ):
     """Create a new permission."""
     db_permission = service.create_permission(db, permission)
-    return ApiResponse(data=db_permission)
-
-
-@permissions_router.patch(
-    "/{permission_id}", response_model=ApiResponse[schema.PermissionRead]
-)
-async def update_permission(
-    permission_id: str,
-    permission: schema.PermissionUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(Permissions.Update)),
-):
-    """Update an existing permission."""
-    db_permission = service.update_permission(db, permission_id, permission)
     return ApiResponse(data=db_permission)
 
 

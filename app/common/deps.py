@@ -7,6 +7,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from sqlmodel import Session as SQLSession
 
+from app.common.scopes import has_object_permission
 from app.core.config import settings
 from app.core.db import engine
 from app.core.security import (
@@ -127,7 +128,7 @@ def require_permission(permission_name: Permission):
             )
 
         # Check authenticated user's permissions
-        user_permissions = service_get_user_permissions(db, current_user.id, True)
+        user_permissions = service_get_user_permissions(db, current_user.id)
         user_permission_names = [perm.name for perm in user_permissions]
 
         if permission_name not in user_permission_names:
@@ -144,7 +145,7 @@ def check_permissions_user(
     db: Session, user: User, required_permissions: list[str]
 ) -> bool:
     """Check if user has all required permissions"""
-    user_permissions = service_get_user_permissions(db, user.id, True)
+    user_permissions = service_get_user_permissions(db, user.id)
     user_permission_names = [perm.name for perm in user_permissions]
     return all(perm in user_permission_names for perm in required_permissions)
 
@@ -156,3 +157,21 @@ def get_role_permissions(role: str, db: Session) -> list[str]:
         return []
     role_permissions = [perm.name for perm in role_obj.permissions]
     return role_permissions
+
+
+def require_object_permission(resource: str, action: str):
+    def dependency(
+        object_id: str,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(require_permission(resource)),
+    ):
+        if not has_object_permission(
+            db=db,
+            user=current_user,
+            resource=resource,
+            object_id=object_id,
+            action=action,
+        ):
+            raise HTTPException(status_code=404)
+
+    return dependency

@@ -6,7 +6,8 @@ from app.core.config import settings
 from app.features.companies.model import Company, CompanyEmployee  # noqa: F401
 from app.features.events.model import Event, EventType  # noqa: F401
 from app.features.locations.model import Country, Location, LocationType  # noqa: F401
-from app.features.permissions.model import Permission  # noqa: F401
+from app.features.permissions.model import ObjectPermission, Permission  # noqa: F401
+from app.features.programm.model import EventSession, Programm  # noqa: F401
 from app.features.roles.model import Role, RolePermission  # noqa: F401
 from app.features.users.model import User, UserPermission, UserRole  # noqa: F401
 

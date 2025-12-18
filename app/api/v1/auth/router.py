@@ -188,7 +188,7 @@ async def get_all_permissions(
     db: Session = Depends(get_db),
 ):
     if user:
-        permissions = get_user_permissions(db, user.id, True)
+        permissions = get_user_permissions(db, user.id)
     else:
         permissions, total = list_guest_permissions(db, request)
     return [PermissionBase(name=perm.name) for perm in permissions]

@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     GUEST_ROLE_NAME: str = os.getenv("GUEST_ROLE_NAME", "guest")
     USER_ROLE_NAME: str = os.getenv("USER_ROLE_NAME", "user")
     ADMIN_ROLE_NAME: str = os.getenv("ADMIN_ROLE_NAME", "admin")
+    SYSTEM_ADMIN_ROLE_NAME: str = os.getenv("SYSTEM_ADMIN_ROLE_NAME", "sysadmin")
 
     PROJECT_VERSION: str = os.getenv("PROJECT_VERSION", "0.1.0")
 

@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from sqlmodel import select
 
 from app.core.config import settings
 from app.features.permissions.model import Permission
@@ -101,27 +102,38 @@ def remove_permission_from_user(db: Session, user_id: str, permission_id: str):
 # =========================
 # USER REPO
 # =========================
-def list_users(db: Session, pagination: PaginationParams):
+def list_users(db: Session, pagination: PaginationParams) -> list[User]:
     query = db.query(User)
     return refine_query(query, User, pagination)
 
 
-def get_user_by_id(db: Session, user_id: str):
+def get_user_by_id(
+    db: Session, user_id: str, with_permissions: bool = False
+) -> User | None:
+    if with_permissions:
+        return db.exec(
+            select(User)
+            .where(User.id == user_id)
+            .options(
+                selectinload(User.permissions),
+                selectinload(User.roles).selectinload(Role.permissions),
+            )
+        ).first()
     return db.query(User).filter(User.id == user_id).first()
 
 
-def get_user_by_email(db: Session, email: str):
+def get_user_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email).first()
 
 
-def create_user(db: Session, user: User):
+def create_user(db: Session, user: User) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
 
 
-def update_user(db: Session, user: User, updates: dict):
+def update_user(db: Session, user: User, updates: dict) -> User:
     for key, value in updates.items():
         setattr(user, key, value)
     db.commit()
@@ -129,7 +141,7 @@ def update_user(db: Session, user: User, updates: dict):
     return user
 
 
-def delete_user(db: Session, user: User):
+def delete_user(db: Session, user: User) -> None:
     db.delete(user)
     db.commit()
 

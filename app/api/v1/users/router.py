@@ -80,20 +80,6 @@ async def list_user_permissions(
     return refine_list_response(response, results, total)
 
 
-@users_router.get(
-    "/permissions/{user_id}", response_model=ApiResponse[schema.UserPermissionRead]
-)
-async def get_user_permissions(
-    user_id: str,
-    pagination: PaginationParams = Depends(),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(UserPermissions.Show)),
-):
-    """Get permissions for a specific user."""
-    user_permissions = service.get_user_permissions(db, user_id, pagination)
-    return ApiResponse(data=user_permissions)
-
-
 @users_router.post(
     "/permissions", response_model=ApiResponse[schema.UserPermissionRead]
 )

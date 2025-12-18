@@ -55,6 +55,8 @@ class Permission(SQLModel, table=True):
     )
     name: str = Field(unique=True, index=True)
 
+    allow_object_bypass: bool = Field(default=False)
+
     # Relationships
     roles: list["Role"] = Relationship(
         back_populates="permissions", link_model=RolePermission

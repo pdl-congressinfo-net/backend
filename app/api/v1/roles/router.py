@@ -28,17 +28,6 @@ async def list_role_permissions(
     return refine_list_response(response, results, total)
 
 
-@roles_router.get("/permissions/{role_id}")
-async def get_role_permissions(
-    role_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_permission(RolePermissions.Show)),
-):
-    """Get permissions for a specific role."""
-    permissions = service.get_role_permissions(db, role_id)
-    return ApiResponse(data=permissions)
-
-
 @roles_router.post(
     "/permissions", response_model=ApiResponse[schema.RolePermissionRead]
 )
