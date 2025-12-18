@@ -99,6 +99,14 @@ class Locations(Permission, resource="locations"):
     pass
 
 
+class Programms(Permission, resource="programm"):
+    pass
+
+
+class EventSessions(Permission, resource="eventsessions"):
+    pass
+
+
 class Events(Permission, resource="events"):
     @classproperty
     def Participate(cls) -> str:

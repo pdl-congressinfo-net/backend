@@ -36,7 +36,10 @@ class Programm(SQLModel, table=True):
     type: ProgrammType = Field(default=ProgrammType.LECTURE, index=True)
 
     # Location & Logistics
-    location: Optional["Location"] = Field(default=None)  # Room or building
+    location_id: str | None = Field(
+        default=None, foreign_key="locations.id", index=True
+    )
+    location: Optional["Location"] = Relationship()  # Room or building
     capacity: int | None = Field(default=None)  # Max participants
 
     # Timing within the day session
@@ -45,7 +48,8 @@ class Programm(SQLModel, table=True):
 
     # Content Details
     level: str | None = Field(default=None)  # Beginner, Intermediate, Advanced
-    speaker_id: Optional["Contact"] = Field(default=None)  # Speaker/Presenter name
+    speaker_id: str | None = Field(default=None, foreign_key="contacts.id", index=True)
+    speaker: Optional["Contact"] = Relationship()  # Speaker/Presenter name
     tags: str | None = Field(default=None)  # Comma-separated tags
 
     # Position within the day session
@@ -71,6 +75,8 @@ class EventSession(SQLModel, table=True):
     # Day window
     start_time: datetime = Field(index=True)
     end_time: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Owning event
     event_id: str = Field(foreign_key="events.id", index=True)
